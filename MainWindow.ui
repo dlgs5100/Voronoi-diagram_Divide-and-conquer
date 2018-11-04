@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>800</height>
+    <height>804</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,12 +24,12 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="Btn_Run">
+   <widget class="QPushButton" name="buttonRun">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>350</x>
       <y>710</y>
-      <width>81</width>
+      <width>91</width>
       <height>31</height>
      </rect>
     </property>
@@ -37,12 +37,12 @@
      <string>Run</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Btn_Step">
+   <widget class="QPushButton" name="buttonStep">
     <property name="geometry">
      <rect>
-      <x>140</x>
+      <x>90</x>
       <y>710</y>
-      <width>101</width>
+      <width>91</width>
       <height>31</height>
      </rect>
     </property>
@@ -50,20 +50,20 @@
      <string>Step by step</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Btn_Load">
+   <widget class="QPushButton" name="buttonInput">
     <property name="geometry">
      <rect>
-      <x>570</x>
+      <x>220</x>
       <y>710</y>
       <width>91</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>Load</string>
+     <string>Input</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Btn_Set">
+   <widget class="QPushButton" name="buttonSet">
     <property name="geometry">
      <rect>
       <x>530</x>
@@ -120,6 +120,32 @@
     </property>
     <property name="text">
      <string>Y:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="buttonOutput">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>710</y>
+      <width>91</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Output</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="buttonClear">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>710</y>
+      <width>91</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clear</string>
     </property>
    </widget>
   </widget>

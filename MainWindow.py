@@ -29,15 +29,18 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow,self).__init__()
         loadUi('MainWindow.ui', self)
 
-        self.Btn_Set.clicked.connect(self.listenerSetPoint)
-        self.Btn_Run.clicked.connect(self.listenerRun)
-        self.Btn_Load.clicked.connect(self.listenerLoadData)
+        self.buttonSet.clicked.connect(self.listenerSet)
+        # self.buttonStep.clicked.connect(self.listenerStep)
+        self.buttonInput.clicked.connect(self.listenerInput)
+        # self.buttonRun.clicked.connect(self.listenerRun)
+        # self.buttonOutput.clicked.connect(self.listenerOutput)
+        self.buttonClear.clicked.connect(self.listenerClear)
 
         self.scene = GraphicsScene(self)
         self.graphicsView.setScene(self.scene)
         self.graphicsView.show()
     
-    def listenerSetPoint(self):
+    def listenerSet(self):
         if self.lineEdit_X.text() != '' and self.lineEdit_Y.text() != '':
             point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
             
@@ -58,8 +61,26 @@ class MainWindow(QtWidgets.QMainWindow):
             self.dialog = MessageDialog.MessageDialog('Empty X or Y')
             self.dialog.exec_()
 
-    def listenerRun(self):
+    def listenerClear(self):
+        self.listPoint.clear()
         self.scene.clear()
+    
+    def listenerInput(self):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+        if fileName:
+            # Testing
+            print(fileName)
+            f = open(fileName, 'r')
 
-    def listenerLoadData(self):
-        self.scene.clear()
+            while 1:
+                size = int(f.readline())
+                if size > 0:
+                    print('----------------')
+                    for i in range (0, size):
+                        print(f.readline())
+                else:
+                    print(size)
+                    break
+
