@@ -3,6 +3,7 @@ from PyQt5.uic import loadUi
 import MessageDialog as MessageDialog
 
 class GraphicsScene(QtWidgets.QGraphicsScene):
+    moved = QtCore.pyqtSignal(QtWidgets.QGraphicsSceneMouseEvent)
     def __init__(self, parent=None):
         QtWidgets.QGraphicsScene.__init__(self, parent)
         self.setSceneRect(0, 0, 600, 600)
@@ -15,13 +16,16 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
             self.dialog = MessageDialog.MessageDialog('Point exsit')
             self.dialog.exec_()
         else:
-            pen = QtGui.QPen(QtCore.Qt.black)
-            brush = QtGui.QBrush(QtCore.Qt.black)
+            pen = QtGui.QPen(QtCore.Qt.red)
+            brush = QtGui.QBrush(QtCore.Qt.red)
             self.addEllipse(x, y, 1, 1, pen, brush)
         
             MainWindow.listPoint.append(point)
             # Testing
             print(x, y)
+
+    def mouseMoveEvent(self, event):
+        self.moved.emit(event)
 
 class MainWindow(QtWidgets.QMainWindow):
     listPoint = []
@@ -37,9 +41,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.buttonClear.clicked.connect(self.listenerClear)
 
         self.scene = GraphicsScene(self)
+        self.scene.moved.connect(self.listenerAutoXY)
+        self.graphicsView.setMouseTracking(True)
         self.graphicsView.setScene(self.scene)
         self.graphicsView.show()
-    
+    def listenerAutoXY(self, arg):
+        self.labelAutoX.setText(str(arg.scenePos().x()))
+        self.labelAutoY.setText(str(arg.scenePos().y()))
+
     def listenerSet(self):
         if self.lineEdit_X.text() != '' and self.lineEdit_Y.text() != '':
             point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
@@ -48,8 +57,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.dialog = MessageDialog.MessageDialog('Point exsit')
                 self.dialog.exec_()
             else:
-                pen = QtGui.QPen(QtCore.Qt.black)
-                brush = QtGui.QBrush(QtCore.Qt.black)
+                pen = QtGui.QPen(QtCore.Qt.red)
+                brush = QtGui.QBrush(QtCore.Qt.red)
                 self.scene.addEllipse(point[0], point[1], 1, 1, pen, brush)
                 self.listPoint.append(point)
                     
@@ -77,10 +86,13 @@ class MainWindow(QtWidgets.QMainWindow):
             while 1:
                 size = int(f.readline())
                 if size > 0:
-                    print('----------------')
                     for i in range (0, size):
-                        print(f.readline())
+                        point = f.readline().split()
+                        point = list(map(int, point))
+                        self.listPoint.append(point)
                 else:
                     print(size)
                     break
 
+    def draw(self):
+        print(123)
