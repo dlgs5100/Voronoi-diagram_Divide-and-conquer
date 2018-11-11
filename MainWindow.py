@@ -124,7 +124,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.point = self.findIntersectionPoint()
 
-        self.determineIntersectionRelativePosition(self.listConvexLine[0], self.point)
+        for i in range(0, 3):
+            self.deleteExceedLine(self.listConvexLine[i], self.point)
         
 
     def drawConvex(self, line):
@@ -168,8 +169,6 @@ class MainWindow(QtWidgets.QMainWindow):
             return IntersectionPoint
 
     def determineIntersectionRelativePosition(self, line, point):
-
-
         print(line.x1())
         print(line.y1())
         print(line.x2())
@@ -184,3 +183,72 @@ class MainWindow(QtWidgets.QMainWindow):
             print('left')
         else:
             print('on line') 
+
+    def deleteExceedLine(self, line, point):
+        midPointX = (line.x1()+line.x2())/2
+        midPointY = (line.y1()+line.y2())/2
+        
+        vectorX = point.x()-midPointX
+        vectorY = point.y()-midPointY
+
+        if line.dx() != 0:
+            m = (point.y()-midPointY) / (point.x()-midPointX)
+            c = point.y()-(m*point.x())
+            
+        if vectorX > 0:
+            drawPointX = 600
+            if vectorY != 0:
+                drawPointY = m*drawPointX+c
+            else:
+                drawPointY = point.y()
+        elif vectorX < 0:
+            drawPointX = 0
+            if vectorY != 0:
+                drawPointY = m*drawPointX+c
+            else:
+                drawPointY = point.y()
+        else:
+            drawPointX = point.x()
+            if vectorY > 0:
+                drawPointY = 600
+            elif vectorY < 0:
+                drawPointY = 0
+            else:
+                drawPointY = point.y()
+
+        if drawPointX != point.x() and drawPointY != point.y():
+            print(point.x(), point.y(), drawPointX, drawPointY)
+            self.pen = QtGui.QPen(QtCore.Qt.white)
+            line = QtCore.QLineF(point.x(), point.y(), drawPointX, drawPointY)
+            self.scene.addLine(line, self.pen)
+        
+        # if vectorX > 0:
+        #     if vectorY > 0:
+        #         drawPointX = 600
+        #         drawPointY = m*drawPointX+c
+        #     elif vectorY < 0:
+        #         drawPointX = 600
+        #         drawPointY = m*drawPointX+c
+        #     else:
+        #         drawPointX = 600
+        #         drawPointY = m*point.y()
+        # elif vectorX < 0:
+        #     if vectorY > 0:
+        #         drawPointX = 0
+        #         drawPointY = m*drawPointX+c
+        #     elif vectorY < 0:
+        #         drawPointX = 0
+        #         drawPointY = m*drawPointX+c
+        #     else:
+        #         drawPointX = 0
+        #         drawPointY = m*point.y()
+        # else:
+        #     if vectorY > 0:
+        #         drawPointX = point.x()
+        #         drawPointY = 600
+        #     elif vectorY < 0:
+        #         drawPointX = point.x()
+        #         drawPointY = 0
+        #     else:
+        #         drawPointX = point.x()
+        #         drawPointY = point.y()
