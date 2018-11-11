@@ -23,9 +23,8 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
         
             MainWindow.listPoint.append(point)
             MainWindow.listPointCount[0] += 1
-            # Testing
+            # Testing mouse set point
             print(x, y)
-            print(MainWindow.listPointCount)
 
     def mouseMoveEvent(self, event):
         self.moved.emit(event)
@@ -33,8 +32,8 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
 class MainWindow(QtWidgets.QMainWindow):
     listPoint = []
     listPointCount = [0]
-    listConvexLine = []
-    listPerpendicularBisector = []
+    listConvexLine = [] # 擦掉多的，清空
+    listPerpendicularBisector = []  # 畫完找完交點，清空
     
     def __init__(self):
         super(MainWindow,self).__init__()
@@ -123,11 +122,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.drawPerpendicularBisector(self.listPoint[1][0], self.listPoint[1][1], self.listPoint[2][0], self.listPoint[2][1])
         self.drawPerpendicularBisector(self.listPoint[2][0], self.listPoint[2][1], self.listPoint[0][0], self.listPoint[0][1])
 
-        # Erase
-        temp = QtCore.QPointF(0,0)
-        # print(self.listPerpendicularBisector[0].intersect(self.listPerpendicularBisector[0], temp))
-        self.listPerpendicularBisector[0].intersect(self.listPerpendicularBisector[1], temp)
-        print(temp)     # Find the point
+        self.point = self.findIntersectionPoint()
+
+        self.determineIntersectionRelativePosition(self.listConvexLine[0], self.point)
+        
 
     def drawConvex(self, line):
         self.pen = QtGui.QPen(QtCore.Qt.green)
@@ -138,17 +136,51 @@ class MainWindow(QtWidgets.QMainWindow):
         midpointX = (x1+x2)/2
         midpointY = (y1+y2)/2
         # Perpendicular Bisector slope
-        if (x2-x1) != 0:
+        if (y2-y1) != 0:    # 中垂腺斜率無限
             m = -(x2-x1)/(y2-y1)
+            c = midpointY-(m*midpointX)
+            x1New = 0
+            x2New = 600
+            y1New = m*x1New+c
+            y2New = m*x2New+c
         else:
-            m = 0
-        c = midpointY-(m*midpointX)
-        
-        y1New = m*0+c
-        y2New = m*600+c
+            x1New = midpointX
+            x2New = midpointX
+            y1New = 0
+            y2New = 600
     
         self.pen = QtGui.QPen(QtCore.Qt.blue)
-        line = QtCore.QLineF(0, y1New, 600, y2New)
+        line = QtCore.QLineF(x1New, y1New, x2New, y2New)
         self.scene.addLine(line, self.pen)
 
         self.listPerpendicularBisector.append(line)
+
+    def findIntersectionPoint(self):
+        IntersectionPoint = QtCore.QPointF(0,0)
+        result = self.listPerpendicularBisector[0].intersect(self.listPerpendicularBisector[1], IntersectionPoint)
+        
+        if result == 0:
+            print("No Intersection!")
+            return None
+        else:
+            # Testing Intersection point
+            # print(IntersectionPoint.x(), IntersectionPoint.y())
+            return IntersectionPoint
+
+    def determineIntersectionRelativePosition(self, line, point):
+
+
+        print(line.x1())
+        print(line.y1())
+        print(line.x2())
+        print(line.y2())
+        print(point.x())
+        print(point.y())
+        result = (line.x2()-line.x1())*(point.y()-line.y1()) - (line.y2()-line.y1())*(point.x()-line.x1())
+        # result = (line.y1()-line.y2())*point.x() + (line.x2()-line.x1())*point.y() + line.x1()*line.y2() - line.x2()*line.y1()
+        if result < 0:
+            print('right')
+        elif result > 0:
+            print('left')
+        else:
+            print('on line') 
