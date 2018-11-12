@@ -132,11 +132,11 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.point = self.findIntersectionPoint()
 
-        # for i in range(0, 3):
-        #     self.deleteExceedLine(self.listConvexLine[i], self.point)
         for i in range(0, 3):
-            self.determineIntersectionRelativePosition(self.listConvexLine[i] ,self.point)  # 用點去跑
-        
+            position = self.determineIntersectionRelativePosition(self.listConvexLine[i] ,self.point)  # 用點去跑
+            self.listConvexLine[i] = [self.listConvexLine[i], position]
+            self.deleteExceedLine(self.listConvexLine[i], self.point)
+
         # self.sortPoint()
 
     def sortPoint(self):
@@ -202,17 +202,27 @@ class MainWindow(QtWidgets.QMainWindow):
         print(line.x1(), line.y1(), line.x2(), line.y2())
         if result > 0:
             print('right')
+            return 'right'
         elif result < 0:
             print('left')
+            return 'left'
         else:
-            print('on line') 
+            print('line')
+            return 'line'
 
     def deleteExceedLine(self, line, point):
-        midPointX = (line.x1()+line.x2())/2
-        midPointY = (line.y1()+line.y2())/2
+        midPointX = (line[0].x1()+line[0].x2())/2
+        midPointY = (line[0].y1()+line[0].y2())/2
         
-        vectorX = point.x()-midPointX
-        vectorY = point.y()-midPointY
+        if line[1] == 'left':
+            vectorX = point.x()-midPointX
+            vectorY = point.y()-midPointY
+        elif line[1] == 'right':
+            vectorX = midPointX-point.x()
+            vectorY = midPointY-point.y()
+        else:
+            vectorX = 0
+            vectorY = 0
 
         if (point.x()-midPointX) != 0:
             m = (point.y()-midPointY) / (point.x()-midPointX)
@@ -241,38 +251,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if drawPointX != point.x() or drawPointY != point.y():
             self.pen = QtGui.QPen(QtCore.Qt.white)
-            line = QtCore.QLineF(point.x(), point.y(), drawPointX, drawPointY)
-            self.scene.addLine(line, self.pen)
-        
-        # if vectorX > 0:
-        #     if vectorY > 0:
-        #         drawPointX = 600
-        #         drawPointY = m*drawPointX+c
-        #     elif vectorY < 0:
-        #         drawPointX = 600
-        #         drawPointY = m*drawPointX+c
-        #     else:
-        #         drawPointX = 600
-        #         drawPointY = m*point.y()
-        # elif vectorX < 0:
-        #     if vectorY > 0:
-        #         drawPointX = 0
-        #         drawPointY = m*drawPointX+c
-        #     elif vectorY < 0:
-        #         drawPointX = 0
-        #         drawPointY = m*drawPointX+c
-        #     else:
-        #         drawPointX = 0
-        #         drawPointY = m*point.y()
-        # else:
-        #     if vectorY > 0:
-        #         drawPointX = point.x()
-        #         drawPointY = 600
-        #     elif vectorY < 0:
-        #         drawPointX = point.x()
-        #         drawPointY = 0
-        #     else:
-        #         drawPointX = point.x()
-        #         drawPointY = point.y()
-
-        
+            eraseLine = QtCore.QLineF(point.x(), point.y(), drawPointX, drawPointY)
+            self.scene.addLine(eraseLine, self.pen)
+    
