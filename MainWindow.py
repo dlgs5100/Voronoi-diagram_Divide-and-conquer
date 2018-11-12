@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.uic import loadUi
 import MessageDialog as MessageDialog
+import operator
 
 
 class GraphicsScene(QtWidgets.QGraphicsScene):
@@ -12,7 +13,8 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
     def mousePressEvent(self, event):
         x = event.scenePos().x()
         y = event.scenePos().y()
-        point = [x, y]
+
+        point = QtCore.QPointF(x, y)
         if point in MainWindow.listPoint:
             self.dialog = MessageDialog.MessageDialog('Point exsit')
             self.dialog.exec_()
@@ -43,7 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.buttonStep.clicked.connect(self.listenerStep)
         self.buttonInput.clicked.connect(self.listenerInput)
         self.buttonRun.clicked.connect(self.listenerRun)
-        # self.buttonOutput.clicked.connect(self.listenerOutput)
+        self.buttonOutput.clicked.connect(self.listenerOutput)
         self.buttonClear.clicked.connect(self.listenerClear)
 
         self.scene = GraphicsScene(self)
@@ -57,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def listenerSet(self):
         if self.lineEdit_X.text() != '' and self.lineEdit_Y.text() != '':
-            point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
+            point = QtCore.QPointF(int(self.lineEdit_X.text()), int(self.lineEdit_Y.text()))
             
             if point in self.listPoint:
                 self.dialog = MessageDialog.MessageDialog('Point exsit')
@@ -65,7 +67,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 pen = QtGui.QPen(QtCore.Qt.red)
                 brush = QtGui.QBrush(QtCore.Qt.red)
-                self.scene.addEllipse(point[0], point[1], 1, 1, pen, brush)
+                self.scene.addEllipse(point.x(), point.y(), 1, 1, pen, brush)
                 self.listPoint.append(point)
                 self.listPointCount[0] += 1
                     
@@ -80,6 +82,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def listenerClear(self):
         self.listPoint.clear()
         self.listPointCount.clear()
+        self.listConvexLine.clear()
+        self.listPerpendicularBisector.clear()
         self.scene.clear()
 
         self.listPointCount.append(0)
@@ -102,43 +106,68 @@ class MainWindow(QtWidgets.QMainWindow):
                     if size > 0:
                         self.listPointCount.append(size)
                         for i in range (0, size):
-                            point = f.readline().split()
-                            point = list(map(int, point))
+                            data = f.readline().split()
+                            point = QtCore.QPointF(list(map(int, data))[0], list(map(int, data))[1])
                             self.listPoint.append(point)
                     else:
                         break
 
+    def listenerOutput(self):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+        if fileName:
+            # Testing
+            print(fileName)
+            f = open(fileName, 'w')
+
     def listenerRun(self):
-        self.listConvexLine.append(QtCore.QLineF(self.listPoint[0][0], self.listPoint[0][1], self.listPoint[1][0], self.listPoint[1][1]))
-        self.listConvexLine.append(QtCore.QLineF(self.listPoint[1][0], self.listPoint[1][1], self.listPoint[2][0], self.listPoint[2][1]))
-        self.listConvexLine.append(QtCore.QLineF(self.listPoint[2][0], self.listPoint[2][1], self.listPoint[0][0], self.listPoint[0][1]))
 
         # convex hull
+        self.drawConvex(self.listPoint)
+
+        # Perpendicular Bisector 3 point
         for i in range(0, 3):
-            self.drawConvex(self.listConvexLine[i])
-
-        # Perpendicular Bisector
-        self.drawPerpendicularBisector(self.listPoint[0][0], self.listPoint[0][1], self.listPoint[1][0], self.listPoint[1][1])
-        self.drawPerpendicularBisector(self.listPoint[1][0], self.listPoint[1][1], self.listPoint[2][0], self.listPoint[2][1])
-        self.drawPerpendicularBisector(self.listPoint[2][0], self.listPoint[2][1], self.listPoint[0][0], self.listPoint[0][1])
-
+            self.drawPerpendicularBisector(self.listConvexLine[i])
+        
         self.point = self.findIntersectionPoint()
 
+        # for i in range(0, 3):
+        #     self.deleteExceedLine(self.listConvexLine[i], self.point)
         for i in range(0, 3):
-            self.deleteExceedLine(self.listConvexLine[i], self.point)
+            self.determineIntersectionRelativePosition(self.listConvexLine[i] ,self.point)  # 用點去跑
         
+        # self.sortPoint()
 
-    def drawConvex(self, line):
+    def sortPoint(self):
+        list1 = sorted(self.listPoint, key=operator.itemgetter(0, 1))
+        # self.listPoint.sort(key = lambda x: (self.listPoint[], self.listPoint[1]))
+        print(list1)
+
+    def drawConvex(self, listPoint):
+        order = (listPoint[1].x()-listPoint[0].x())*(listPoint[2].y()-listPoint[0].y()) - (listPoint[1].y()-listPoint[0].y())*(listPoint[2].x()-listPoint[0].x())
+        if order < 0:   # 逆時針
+            print('逆')
+            self.listConvexLine.append(QtCore.QLineF(listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
+            self.listConvexLine.append(QtCore.QLineF(listPoint[1].x(), listPoint[1].y(), listPoint[2].x(), listPoint[2].y()))
+            self.listConvexLine.append(QtCore.QLineF(listPoint[2].x(), listPoint[2].y(), listPoint[0].x(), listPoint[0].y()))
+        elif order > 0:     # 順時針
+            print('順')
+            self.listConvexLine.append(QtCore.QLineF(listPoint[0].x(), listPoint[0].y(), listPoint[2].x(), listPoint[2].y()))
+            self.listConvexLine.append(QtCore.QLineF(listPoint[2].x(), listPoint[2].y(), listPoint[1].x(), listPoint[1].y()))
+            self.listConvexLine.append(QtCore.QLineF(listPoint[1].x(), listPoint[1].y(), listPoint[0].x(), listPoint[0].y()))
+
         self.pen = QtGui.QPen(QtCore.Qt.green)
         # 3 point
-        self.scene.addLine(line, self.pen)
+        for i in range(0, 3):
+            self.scene.addLine(self.listConvexLine[i], self.pen)
 
-    def drawPerpendicularBisector(self, x1, y1, x2, y2):
-        midpointX = (x1+x2)/2
-        midpointY = (y1+y2)/2
+    def drawPerpendicularBisector(self, listConvexLine):
+        midpointX = (listConvexLine.x1()+listConvexLine.x2())/2
+        midpointY = (listConvexLine.y1()+listConvexLine.y2())/2
         # Perpendicular Bisector slope
-        if (y2-y1) != 0:    # 中垂腺斜率無限
-            m = -(x2-x1)/(y2-y1)
+        if (listConvexLine.y2()-listConvexLine.y1()) != 0:    # 中垂腺斜率無限
+            m = -(listConvexLine.x2()-listConvexLine.x1()) / (listConvexLine.y2()-listConvexLine.y1())
             c = midpointY-(m*midpointX)
             x1New = 0
             x2New = 600
@@ -165,21 +194,15 @@ class MainWindow(QtWidgets.QMainWindow):
             return None
         else:
             # Testing Intersection point
-            # print(IntersectionPoint.x(), IntersectionPoint.y())
+            print(IntersectionPoint.x(), IntersectionPoint.y())
             return IntersectionPoint
 
     def determineIntersectionRelativePosition(self, line, point):
-        print(line.x1())
-        print(line.y1())
-        print(line.x2())
-        print(line.y2())
-        print(point.x())
-        print(point.y())
         result = (line.x2()-line.x1())*(point.y()-line.y1()) - (line.y2()-line.y1())*(point.x()-line.x1())
-        # result = (line.y1()-line.y2())*point.x() + (line.x2()-line.x1())*point.y() + line.x1()*line.y2() - line.x2()*line.y1()
-        if result < 0:
+        print(line.x1(), line.y1(), line.x2(), line.y2())
+        if result > 0:
             print('right')
-        elif result > 0:
+        elif result < 0:
             print('left')
         else:
             print('on line') 
@@ -191,7 +214,7 @@ class MainWindow(QtWidgets.QMainWindow):
         vectorX = point.x()-midPointX
         vectorY = point.y()-midPointY
 
-        if line.dx() != 0:
+        if (point.x()-midPointX) != 0:
             m = (point.y()-midPointY) / (point.x()-midPointX)
             c = point.y()-(m*point.x())
             
@@ -216,8 +239,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 drawPointY = point.y()
 
-        if drawPointX != point.x() and drawPointY != point.y():
-            print(point.x(), point.y(), drawPointX, drawPointY)
+        if drawPointX != point.x() or drawPointY != point.y():
             self.pen = QtGui.QPen(QtCore.Qt.white)
             line = QtCore.QLineF(point.x(), point.y(), drawPointX, drawPointY)
             self.scene.addLine(line, self.pen)
@@ -252,3 +274,5 @@ class MainWindow(QtWidgets.QMainWindow):
         #     else:
         #         drawPointX = point.x()
         #         drawPointY = point.y()
+
+        
