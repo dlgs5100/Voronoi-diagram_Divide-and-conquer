@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.uic import loadUi
 import MessageDialog as MessageDialog
 import operator
+import numpy
 
 
 class GraphicsScene(QtWidgets.QGraphicsScene):
@@ -130,14 +131,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.drawConvex(self.listPoint)
 
         # Perpendicular Bisector 3 point
-        for i in range(0, 3):
-            self.drawPerpendicularBisector(self.listConvexLine[i])
+        # for i in range(0, 3):
+        self.drawPerpendicularBisector(self.listConvexLine)
         
-        self.point = self.findIntersectionPoint()
+        self.point = self.findIntersectionPoint(self.listConvexLine)
 
-        for i in range(0, 3):
-            position = self.determineIntersectionRelativePosition(self.listConvexLine[i] ,self.point)  # 用點去跑
-            self.listConvexLine[i] = [self.listConvexLine[i], position]
+        for i in range(0, len(self.listConvexLine)):
+            position = self.determineIntersectionRelativePosition(self.listConvexLine[i][0] ,self.point)
+            self.listConvexLine[i].append(position)
             self.deleteExceedLine(self.listConvexLine[i], self.point)
 
     def sortPoint(self):
@@ -164,40 +165,61 @@ class MainWindow(QtWidgets.QMainWindow):
             self.scene.addLine(self.listConvexLine[i], self.pen)
 
     def drawPerpendicularBisector(self, listConvexLine):
-        midpointX = (listConvexLine.x1()+listConvexLine.x2())/2
-        midpointY = (listConvexLine.y1()+listConvexLine.y2())/2
-        # Perpendicular Bisector slope
-        if (listConvexLine.y2()-listConvexLine.y1()) != 0:    # 中垂腺斜率無限
-            m = -(listConvexLine.x2()-listConvexLine.x1()) / (listConvexLine.y2()-listConvexLine.y1())
-            c = midpointY-(m*midpointX)
-            x1New = 0
-            if m*x1New+c >= 0 and m*x1New+c <= 600:
-                y1New = m*x1New+c
+        for i in range(0, len(listConvexLine)):
+            midpointX = (listConvexLine[i].x1()+listConvexLine[i].x2())/2
+            midpointY = (listConvexLine[i].y1()+listConvexLine[i].y2())/2
+            # Perpendicular Bisector slope
+            if (listConvexLine[i].y2()-listConvexLine[i].y1()) != 0:    # 中垂腺斜率無限
+                m = -(listConvexLine[i].x2()-listConvexLine[i].x1()) / (listConvexLine[i].y2()-listConvexLine[i].y1())
+                c = midpointY-(m*midpointX)
+                if m > 0:
+                    x1New = 0
+                    if m*x1New+c >= 0 and m*x1New+c <= 600:
+                        y1New = m*x1New+c
+                    else:
+                        y1New = 0
+                        x1New = (y1New-c)/m
+                    x2New = 600
+                    if m*x2New+c >= 0 and m*x2New+c <= 600:
+                        y2New = m*x2New+c
+                    else:
+                        y2New = 600
+                        x2New = (y2New-c)/m
+                elif m < 0:
+                    x1New = 0
+                    if m*x1New+c >= 0 and m*x1New+c <= 600:
+                        y1New = m*x1New+c
+                    else:
+                        y1New = 600
+                        x1New = (y1New-c)/m
+                    x2New = 600
+                    if m*x2New+c >= 0 and m*x2New+c <= 600:
+                        y2New = m*x2New+c
+                    else:
+                        y2New = 0
+                        x2New = (y2New-c)/m
+                else:
+                    x1New = 0
+                    x2New = 600
+                    y1New = midpointY
+                    y2New = midpointY
             else:
+                x1New = midpointX
+                x2New = midpointX
                 y1New = 0
-                x1New = (y1New-c)/m
-
-            x2New = 600
-            if m*x2New+c >= 0 and m*x2New+c <= 600:
-                y2New = m*x2New+c
-            else:
                 y2New = 600
-                x2New = (y2New-c)/m
-        else:
-            x1New = midpointX
-            x2New = midpointX
-            y1New = 0
-            y2New = 600
-    
-        self.pen = QtGui.QPen(QtCore.Qt.blue)
-        line = QtCore.QLineF(x1New, y1New, x2New, y2New)
-        self.scene.addLine(line, self.pen)
+        
+            self.pen = QtGui.QPen(QtCore.Qt.blue)
+            line = QtCore.QLineF(x1New, y1New, x2New, y2New)
+            self.scene.addLine(line, self.pen)
 
-        self.listPerpendicularBisector.append(line)
+            self.listConvexLine[i] = [self.listConvexLine[i], line]
+            # self.listPerpendicularBisector.append(line)
 
-    def findIntersectionPoint(self):
+    def findIntersectionPoint(self, listConvexLine):
         IntersectionPoint = QtCore.QPointF(0,0)
-        result = self.listPerpendicularBisector[0].intersect(self.listPerpendicularBisector[1], IntersectionPoint)
+        # 用前兩個convex line去找交點
+        result = listConvexLine[0][1].intersect(listConvexLine[1][1], IntersectionPoint)
         
         if result == 0:
             print("No Intersection!")
@@ -209,9 +231,9 @@ class MainWindow(QtWidgets.QMainWindow):
             # return QtCore.QPointF(round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
             return IntersectionPoint
 
-    def determineIntersectionRelativePosition(self, line, point):
-        result = (line.x2()-line.x1())*(point.y()-line.y1()) - (line.y2()-line.y1())*(point.x()-line.x1())
-        print(line.x1(), line.y1(), line.x2(), line.y2())
+    def determineIntersectionRelativePosition(self, convexLine, point):
+        result = (convexLine.x2()-convexLine.x1())*(point.y()-convexLine.y1()) - (convexLine.y2()-convexLine.y1())*(point.x()-convexLine.x1())
+        print(convexLine.x1(), convexLine.y1(), convexLine.x2(), convexLine.y2())
         if result > 0:
             print('right')
             return 'right'
@@ -222,9 +244,9 @@ class MainWindow(QtWidgets.QMainWindow):
             print('line')
             return 'line'
 
-    def deleteExceedLine(self, line, point):
-        midPointX = (line[0].x1()+line[0].x2())/2
-        midPointY = (line[0].y1()+line[0].y2())/2
+    def deleteExceedLine(self, convexLine, point):
+        midPointX = (convexLine[0].x1()+convexLine[0].x2())/2
+        midPointY = (convexLine[0].y1()+convexLine[0].y2())/2
         # 交點function回傳精度過高，以此避免
         if abs(midPointX-point.x()) < 0.01:
             midPointX = point.x() 
@@ -232,10 +254,10 @@ class MainWindow(QtWidgets.QMainWindow):
             midPointY = point.y() 
         
         # 由逆時針順序判斷點在線的哪邊
-        if line[1] == 'left':
+        if convexLine[2] == 'left':
             vectorX = point.x()-midPointX
             vectorY = point.y()-midPointY
-        elif line[1] == 'right':
+        elif convexLine[2] == 'right':
             vectorX = midPointX-point.x()
             vectorY = midPointY-point.y()
         else:
@@ -248,10 +270,10 @@ class MainWindow(QtWidgets.QMainWindow):
             c = point.y()-(m*point.x())
         else:
             if (point.y()-midPointY) == 0: # 交點在線上
-                m = -(line[0].x1()-line[0].x2()) / (line[0].y1()-line[0].y2())
+                m = -(convexLine[0].x1()-convexLine[0].x2()) / (convexLine[0].y1()-convexLine[0].y2())
                 c = point.y()-(m*point.x())
-
         
+
         if vectorX > 0:
             drawPointX = 600
             if vectorY != 0:
@@ -271,13 +293,13 @@ class MainWindow(QtWidgets.QMainWindow):
             elif vectorY < 0: # 水平
                 drawPointY = 0
             else: # 點在線上
-                if line[0].x1()-line[0].x2() > 0 and line[0].y1()-line[0].y2() > 0:
+                if convexLine[0].x1()-convexLine[0].x2() > 0 and convexLine[0].y1()-convexLine[0].y2() > 0:
                     drawPointX = 0
-                elif line[0].x1()-line[0].x2() > 0 and line[0].y1()-line[0].y2() < 0: 
+                elif convexLine[0].x1()-convexLine[0].x2() > 0 and convexLine[0].y1()-convexLine[0].y2() < 0: 
                     drawPointX = 600
-                elif line[0].x1()-line[0].x2() < 0 and line[0].y1()-line[0].y2() > 0: 
+                elif convexLine[0].x1()-convexLine[0].x2() < 0 and convexLine[0].y1()-convexLine[0].y2() > 0: 
                     drawPointX = 0
-                elif line[0].x1()-line[0].x2() < 0 and line[0].y1()-line[0].y2() < 0: 
+                elif convexLine[0].x1()-convexLine[0].x2() < 0 and convexLine[0].y1()-convexLine[0].y2() < 0: 
                     drawPointX = 600
                 drawPointY = m*drawPointX+c
 
@@ -285,4 +307,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.pen = QtGui.QPen(QtCore.Qt.white)
             eraseLine = QtCore.QLineF(point.x(), point.y(), drawPointX, drawPointY)
             self.scene.addLine(eraseLine, self.pen)
-    
+
+            distance1 = self.calculateDistance(convexLine[1].x1(), convexLine[1].y1(), drawPointX, drawPointY)
+            distance2 = self.calculateDistance(convexLine[1].x2(), convexLine[1].y2(), drawPointX, drawPointY)
+            if distance1 < distance2:
+                convexLine[1].setP1(QtCore.QPointF(point.x(), point.y()))
+            else:
+                convexLine[1].setP2(QtCore.QPointF(point.x(), point.y()))
+
+            print('Voronoi: ' ,convexLine[1])
+    def calculateDistance(self, x1, y1, x2, y2):
+        return numpy.sqrt(pow(x1-x2,2) + pow(y1-y2,2))
