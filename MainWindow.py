@@ -14,7 +14,8 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
         x = event.scenePos().x()
         y = event.scenePos().y()
 
-        point = QtCore.QPointF(x, y)
+        # point = QtCore.QPointF(x, y)
+        point = [x,y]
         if point in MainWindow.listPoint:
             self.dialog = MessageDialog.MessageDialog('Point exsit')
             self.dialog.exec_()
@@ -59,7 +60,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def listenerSet(self):
         if self.lineEdit_X.text() != '' and self.lineEdit_Y.text() != '':
-            point = QtCore.QPointF(int(self.lineEdit_X.text()), int(self.lineEdit_Y.text()))
+            # point = QtCore.QPointF(int(self.lineEdit_X.text()), int(self.lineEdit_Y.text()))
+            point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
             
             if point in self.listPoint:
                 self.dialog = MessageDialog.MessageDialog('Point exsit')
@@ -67,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 pen = QtGui.QPen(QtCore.Qt.red)
                 brush = QtGui.QBrush(QtCore.Qt.red)
-                self.scene.addEllipse(point.x(), point.y(), 1, 1, pen, brush)
+                self.scene.addEllipse(point[0], point[1], 1, 1, pen, brush)
                 self.listPoint.append(point)
                 self.listPointCount[0] += 1
                     
@@ -123,6 +125,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def listenerRun(self):
 
+        self.sortPoint()
         # convex hull
         self.drawConvex(self.listPoint)
 
@@ -137,12 +140,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.listConvexLine[i] = [self.listConvexLine[i], position]
             self.deleteExceedLine(self.listConvexLine[i], self.point)
 
-        # self.sortPoint()
-
     def sortPoint(self):
         list1 = sorted(self.listPoint, key=operator.itemgetter(0, 1))
-        # self.listPoint.sort(key = lambda x: (self.listPoint[], self.listPoint[1]))
-        print(list1)
+        for i in range(0, len(self.listPoint)):
+            self.listPoint[i] = QtCore.QPointF(list1[i][0], list1[i][1])
 
     def drawConvex(self, listPoint):
         order = (listPoint[1].x()-listPoint[0].x())*(listPoint[2].y()-listPoint[0].y()) - (listPoint[1].y()-listPoint[0].y())*(listPoint[2].x()-listPoint[0].x())
@@ -170,9 +171,18 @@ class MainWindow(QtWidgets.QMainWindow):
             m = -(listConvexLine.x2()-listConvexLine.x1()) / (listConvexLine.y2()-listConvexLine.y1())
             c = midpointY-(m*midpointX)
             x1New = 0
+            if m*x1New+c >= 0 and m*x1New+c <= 600:
+                y1New = m*x1New+c
+            else:
+                y1New = 0
+                x1New = (y1New-c)/m
+
             x2New = 600
-            y1New = m*x1New+c
-            y2New = m*x2New+c
+            if m*x2New+c >= 0 and m*x2New+c <= 600:
+                y2New = m*x2New+c
+            else:
+                y2New = 600
+                x2New = (y2New-c)/m
         else:
             x1New = midpointX
             x2New = midpointX
@@ -194,7 +204,9 @@ class MainWindow(QtWidgets.QMainWindow):
             return None
         else:
             # Testing Intersection point
-            print(IntersectionPoint.x(), IntersectionPoint.y())
+            print('交點:', round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
+            
+            # return QtCore.QPointF(round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
             return IntersectionPoint
 
     def determineIntersectionRelativePosition(self, line, point):
@@ -213,7 +225,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def deleteExceedLine(self, line, point):
         midPointX = (line[0].x1()+line[0].x2())/2
         midPointY = (line[0].y1()+line[0].y2())/2
+        # 交點function回傳精度過高，以此避免
+        if abs(midPointX-point.x()) < 0.01:
+            midPointX = point.x() 
+        if abs(midPointY-point.y()) < 0.01:
+            midPointY = point.y() 
         
+        # 由逆時針順序判斷點在線的哪邊
         if line[1] == 'left':
             vectorX = point.x()-midPointX
             vectorY = point.y()-midPointY
@@ -224,10 +242,16 @@ class MainWindow(QtWidgets.QMainWindow):
             vectorX = 0
             vectorY = 0
 
-        if (point.x()-midPointX) != 0:
+        
+        if (point.x()-midPointX) != 0:  # 正常情況
             m = (point.y()-midPointY) / (point.x()-midPointX)
             c = point.y()-(m*point.x())
-            
+        else:
+            if (point.y()-midPointY) == 0: # 交點在線上
+                m = -(line[0].x1()-line[0].x2()) / (line[0].y1()-line[0].y2())
+                c = point.y()-(m*point.x())
+
+        
         if vectorX > 0:
             drawPointX = 600
             if vectorY != 0:
@@ -242,12 +266,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 drawPointY = point.y()
         else:
             drawPointX = point.x()
-            if vectorY > 0:
+            if vectorY > 0: # 垂直
                 drawPointY = 600
-            elif vectorY < 0:
+            elif vectorY < 0: # 水平
                 drawPointY = 0
-            else:
-                drawPointY = point.y()
+            else: # 點在線上
+                if line[0].x1()-line[0].x2() > 0 and line[0].y1()-line[0].y2() > 0:
+                    drawPointX = 0
+                elif line[0].x1()-line[0].x2() > 0 and line[0].y1()-line[0].y2() < 0: 
+                    drawPointX = 600
+                elif line[0].x1()-line[0].x2() < 0 and line[0].y1()-line[0].y2() > 0: 
+                    drawPointX = 0
+                elif line[0].x1()-line[0].x2() < 0 and line[0].y1()-line[0].y2() < 0: 
+                    drawPointX = 600
+                drawPointY = m*drawPointX+c
 
         if drawPointX != point.x() or drawPointY != point.y():
             self.pen = QtGui.QPen(QtCore.Qt.white)
