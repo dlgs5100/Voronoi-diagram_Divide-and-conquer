@@ -203,22 +203,22 @@
    <widget class="QLabel" name="labelDataAmount">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>510</x>
       <y>80</y>
-      <width>61</width>
+      <width>81</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>Data amount:</string>
+     <string>Data remain:</string>
     </property>
    </widget>
    <widget class="QLabel" name="labelAutoAmount">
     <property name="geometry">
      <rect>
-      <x>600</x>
+      <x>590</x>
       <y>80</y>
-      <width>31</width>
+      <width>21</width>
       <height>16</height>
      </rect>
     </property>
@@ -233,7 +233,7 @@
      <x>0</x>
      <y>0</y>
      <width>708</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>

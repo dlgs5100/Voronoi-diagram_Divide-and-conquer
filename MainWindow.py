@@ -4,7 +4,7 @@ import MessageDialog as MessageDialog
 import operator
 import numpy
 
-
+mode = 'None'
 class GraphicsScene(QtWidgets.QGraphicsScene):
     moved = QtCore.pyqtSignal(QtWidgets.QGraphicsSceneMouseEvent)
     def __init__(self, parent=None):
@@ -12,25 +12,31 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
         self.setSceneRect(0, 0, 600, 600)
 
     def mousePressEvent(self, event):
+        global mode
         x = event.scenePos().x()
         y = event.scenePos().y()
 
         # point = QtCore.QPointF(x, y)
         point = [x,y]
-        if point in MainWindow.listPoint:
-            self.dialog = MessageDialog.MessageDialog('Point exsit')
-            self.dialog.exec_()
+        if mode == 'None' or mode == 'user':
+            if point in MainWindow.listPoint:
+                self.dialog = MessageDialog.MessageDialog('Point exsit')
+                self.dialog.exec_()
+            else:
+                pen = QtGui.QPen(QtCore.Qt.red)
+                brush = QtGui.QBrush(QtCore.Qt.red)
+                self.addEllipse(x, y, 1, 1, pen, brush)
+            
+                MainWindow.loadPoint.append(point)
+                if not MainWindow.listPointCount:
+                    MainWindow.listPointCount.append(0)
+                MainWindow.listPointCount[0] += 1
+                # Testing mouse set point
+                print(x, y)
+                mode = 'user'
         else:
-            pen = QtGui.QPen(QtCore.Qt.red)
-            brush = QtGui.QBrush(QtCore.Qt.red)
-            self.addEllipse(x, y, 1, 1, pen, brush)
-        
-            MainWindow.loadPoint.append(point)
-            if not MainWindow.listPointCount:
-                MainWindow.listPointCount.append(0)
-            MainWindow.listPointCount[0] += 1
-            # Testing mouse set point
-            print(x, y)
+            self.dialog = MessageDialog.MessageDialog("Can't enter now!")
+            self.dialog.exec_()
 
     def mouseMoveEvent(self, event):
         self.moved.emit(event)
@@ -65,27 +71,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.labelAutoY.setText(str(arg.scenePos().y()))
 
     def listenerSet(self):
+        global mode
         if self.lineEdit_X.text() != '' and self.lineEdit_Y.text() != '':
             if (int(self.lineEdit_X.text()) >= 0 and int(self.lineEdit_X.text()) <= 600) and (int(self.lineEdit_Y.text()) >= 0 and int(self.lineEdit_Y.text()) <= 600):
-                # point = QtCore.QPointF(int(self.lineEdit_X.text()), int(self.lineEdit_Y.text()))
-                point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
-                
-                if point in self.listPoint:
-                    self.dialog = MessageDialog.MessageDialog('Point exsit')
-                    self.dialog.exec_()
-                else:
-                    pen = QtGui.QPen(QtCore.Qt.red)
-                    brush = QtGui.QBrush(QtCore.Qt.red)
-                    self.scene.addEllipse(point[0], point[1], 1, 1, pen, brush)
-                    self.loadPoint.append(point)
-                    if not self.listPointCount:
-                        self.listPointCount.append(0)
-                    self.listPointCount[0] += 1
-                        
-                    self.graphicsView.show()
+                if mode == 'None' or mode == 'user':
+                    # point = QtCore.QPointF(int(self.lineEdit_X.text()), int(self.lineEdit_Y.text()))
+                    point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
+                    
+                    if point in self.listPoint:
+                        self.dialog = MessageDialog.MessageDialog('Point exsit')
+                        self.dialog.exec_()
+                    else:
+                        pen = QtGui.QPen(QtCore.Qt.red)
+                        brush = QtGui.QBrush(QtCore.Qt.red)
+                        self.scene.addEllipse(point[0], point[1], 1, 1, pen, brush)
+                        self.loadPoint.append(point)
+                        if not self.listPointCount:
+                            self.listPointCount.append(0)
+                        self.listPointCount[0] += 1
+                            
+                        self.graphicsView.show()
 
-                self.lineEdit_X.clear()
-                self.lineEdit_Y.clear()
+                    self.lineEdit_X.clear()
+                    self.lineEdit_Y.clear()
+
+                    mode = 'user'
+                else:
+                    self.dialog = MessageDialog.MessageDialog("Can't enter now!")
+                    self.dialog.exec_()
             else:
                 self.dialog = MessageDialog.MessageDialog('X or Y out of range')
                 self.dialog.exec_()
@@ -94,6 +107,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.dialog.exec_()
 
     def listenerClear(self):
+        global mode
+        mode = 'None'
         self.loadPoint.clear()
         self.listPoint.clear()
         self.listPointCount.clear()
@@ -103,35 +118,40 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resultLine.clear()
         self.scene.clear()
 
-        self.listPointCount.append(0)
     
     def listenerInput(self):
-        self.listPointCount.clear()
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
-        if fileName:
-            # Testing
-            print(fileName)
-            f = open(fileName, 'r')
+        global mode
+        if mode == 'None':
+            self.listPointCount.clear()
+            options = QtWidgets.QFileDialog.Options()
+            options |= QtWidgets.QFileDialog.DontUseNativeDialog
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+            if fileName:
+                # Testing
+                print(fileName)
+                f = open(fileName, 'r')
 
-            while 1:
-                line = f.readline()
-                line = line[:-1]
-                if line.isdigit():
-                    size = int(line)
-                    if size > 0:
-                        self.listPointCount.append(size)
-                        for i in range (0, size):
-                            data = f.readline().split()
-                            # point = QtCore.QPointF(list(map(int, data))[0], list(map(int, data))[1])
-                            point = [list(map(int, data))[0], list(map(int, data))[1]]
-                            self.loadPoint.append(point)
-                    else:
-                        break
-        
-        self.labelAutoAmount.setText(str(len(self.listPointCount)))
-        print(self.loadPoint)
+                while 1:
+                    line = f.readline()
+                    line = line[:-1]
+                    if line.isdigit():
+                        size = int(line)
+                        if size > 0:
+                            self.listPointCount.append(size)
+                            for i in range (0, size):
+                                data = f.readline().split()
+                                # point = QtCore.QPointF(list(map(int, data))[0], list(map(int, data))[1])
+                                point = [list(map(int, data))[0], list(map(int, data))[1]]
+                                self.loadPoint.append(point)
+                        else:
+                            break
+                self.labelAutoAmount.setText(str(len(self.listPointCount)))
+                print(self.loadPoint)
+
+                mode = 'file'
+        else:
+            self.dialog = MessageDialog.MessageDialog("Can't load file now!")
+            self.dialog.exec_()
 
     def listenerOutput(self):
         options = QtWidgets.QFileDialog.Options()
@@ -160,6 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 f.write('\n')
 
     def listenerRun(self):
+        global mode
         self.resultPoint.clear()
         self.resultLine.clear()
         self.listPoint.clear()
@@ -167,6 +188,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.scene.clear()
 
         if len(self.listPointCount) == 0:
+            mode = 'None'
             self.dialog = MessageDialog.MessageDialog('Out of data!')
             self.dialog.exec_()
         else:
@@ -177,25 +199,27 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.labelAutoAmount.setText(str(len(self.listPointCount)))
             print(self.listPoint)
-
             self.resultPoint , self.listPoint = self.sortPoint(self.listPoint)
-            # convex hull
-            self.drawConvex(self.listPoint)
 
-            # Perpendicular Bisector 3 point
-            # for i in range(0, 3):
-            self.drawPerpendicularBisector(self.listConvexLine)
-            
-            self.point = self.findIntersectionPoint(self.listConvexLine)
+            if self.hasDuplicate(self.listPoint) == False:
+                # convex hull
+                self.drawConvex(self.listPoint)
 
-        if self.point != None:
-            for i in range(0, len(self.listConvexLine)):
-                position = self.determineIntersectionRelativePosition(self.listConvexLine[i][0] ,self.point)
-                self.listConvexLine[i].append(position)
-                self.deleteExceedLine(self.listConvexLine[i], self.point)
+                self.drawPerpendicularBisector(self.listConvexLine)
+                
+                self.point = self.findIntersectionPoint(self.listConvexLine)
 
-        self.resultLine = self.sortLine()
-
+                #判斷有無交點
+                if self.point != None:
+                    for i in range(0, len(self.listConvexLine)):
+                        position = self.determineIntersectionRelativePosition(self.listConvexLine[i][0] ,self.point)
+                        self.listConvexLine[i].append(position)
+                        self.deleteExceedLine(self.listConvexLine[i], self.point)
+                self.resultLine = self.sortLine()
+            else:
+                self.dialog = MessageDialog.MessageDialog("Exist duplicate data!")
+                self.dialog.exec_()
+        
     def sortPoint(self, listPoint):
         resultList = sorted(listPoint, key=operator.itemgetter(0, 1))
         for i in range(0, len(listPoint)):
@@ -396,3 +420,14 @@ class MainWindow(QtWidgets.QMainWindow):
             print('Voronoi: ' ,convexLine[1])
     def calculateDistance(self, x1, y1, x2, y2):
         return numpy.sqrt(pow(x1-x2,2) + pow(y1-y2,2))
+    
+    def hasDuplicate(self, list):
+        temp = []
+        for item in list:
+            if item not in temp:
+                temp.append(item)
+
+        if len(temp) != len(list):
+            return True
+        else:
+            return False
