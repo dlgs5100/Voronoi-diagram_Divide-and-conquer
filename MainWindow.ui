@@ -200,6 +200,32 @@
      <string>null</string>
     </property>
    </widget>
+   <widget class="QLabel" name="labelDataAmount">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>80</y>
+      <width>61</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Data amount:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="labelAutoAmount">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>80</y>
+      <width>31</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
