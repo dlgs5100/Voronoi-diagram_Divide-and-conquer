@@ -255,8 +255,10 @@ class MainWindow(QtWidgets.QMainWindow):
         amount =  len(listPoint)
         listLocalConvexLine = []
         if amount > 3:
-            self.dividePoint(listPoint[:math.ceil(amount/2)])
-            self.dividePoint(listPoint[math.ceil(amount/2):])
+            listLocalConvexLine1 = self.dividePoint(listPoint[:math.ceil(amount/2)])    # 左部
+            listLocalConvexLine2 = self.dividePoint(listPoint[math.ceil(amount/2):])    # 右部
+
+            self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
         else:
             print(listPoint)
             listLocalConvexLine = self.drawConvex(listPoint)
@@ -274,7 +276,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 pen = QtGui.QPen(QtCore.Qt.blue)
                 brush = QtGui.QBrush(QtCore.Qt.blue)
                 self.scene.addEllipse(intersectionPoint.x(), intersectionPoint.y(), 1, 1, pen, brush)
-                    
+
+            return listLocalConvexLine       
             # self.resultLine = self.sortLine()
 
     def drawConvex(self, listPoint):
@@ -307,6 +310,32 @@ class MainWindow(QtWidgets.QMainWindow):
         
         return listLocalConvexLine;
         
+    def mergeConvex(self, listLocalConvexLine1, listLocalConvexLine2): #還未考慮水平
+        listLocalConvexLine = []
+        # listLocalPerpendicularBisector = []
+        # setEarseConvexLine = set()
+        
+        listPoint = self.getConvexPoint(listLocalConvexLine2)
+        for i in range(len(listPoint)):
+            for j in range(len(listLocalConvexLine1)):  # 清除第一個convex hull多的線
+                direction = self.determineIntersectionRelativePosition(listLocalConvexLine1[j][0], listPoint[i])
+                if direction == 'right':
+                    self.pen = QtGui.QPen(QtCore.Qt.white)
+                    eraseLine = QtCore.QLineF(listLocalConvexLine1[i][0].x1(), listLocalConvexLine1[i][0].y1(), listLocalConvexLine1[i][0].x2(), listLocalConvexLine1[i][0].y2())
+                    self.scene.addLine(eraseLine, self.pen)
+                else:
+                    listLocalConvexLine.append(listLocalConvexLine1[i][0])
+    
+    def getConvexPoint(self, listLocalConvexLine):
+        listPoint = []
+        for i in range(len(listLocalConvexLine)):
+            point1 = QtCore.QPointF(listLocalConvexLine[i][0].x1(), listLocalConvexLine[i][0].y1())
+            point2 = QtCore.QPointF(listLocalConvexLine[i][0].x2(), listLocalConvexLine[i][0].y2())
+            if point1 not in listPoint:
+                listPoint.append(point1)
+            if point2 not in listPoint:
+                listPoint.append(point2)
+        return listPoint
 
     def drawPerpendicularBisector(self, listLocalConvexLine):
 
