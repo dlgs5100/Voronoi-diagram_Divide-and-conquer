@@ -258,7 +258,17 @@ class MainWindow(QtWidgets.QMainWindow):
             listLocalConvexLine1 = self.dividePoint(listPoint[:math.ceil(amount/2)])    # 左部
             listLocalConvexLine2 = self.dividePoint(listPoint[math.ceil(amount/2):])    # 右部
 
-            self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
+            self.scene.clear()
+            listMergeConvexLine1, listMergeConvexLine2 = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
+            
+            pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
+            for i in range(0, len(listMergeConvexLine1)):
+                if listMergeConvexLine1[i] != None:
+                    self.scene.addLine(listMergeConvexLine1[i], pen)
+            for i in range(0, len(listMergeConvexLine2)):
+                if listMergeConvexLine2[i] != None:
+                    self.scene.addLine(listMergeConvexLine2[i], pen)
+
         else:
             print(listPoint)
             listLocalConvexLine = self.drawConvex(listPoint)
@@ -311,20 +321,60 @@ class MainWindow(QtWidgets.QMainWindow):
         return listLocalConvexLine;
         
     def mergeConvex(self, listLocalConvexLine1, listLocalConvexLine2): #還未考慮水平
-        listLocalConvexLine = []
-        # listLocalPerpendicularBisector = []
-        # setEarseConvexLine = set()
-        
-        listPoint = self.getConvexPoint(listLocalConvexLine2)
-        for i in range(len(listPoint)):
-            for j in range(len(listLocalConvexLine1)):  # 清除第一個convex hull多的線
-                direction = self.determineIntersectionRelativePosition(listLocalConvexLine1[j][0], listPoint[i])
-                if direction == 'right':
-                    self.pen = QtGui.QPen(QtCore.Qt.white)
-                    eraseLine = QtCore.QLineF(listLocalConvexLine1[i][0].x1(), listLocalConvexLine1[i][0].y1(), listLocalConvexLine1[i][0].x2(), listLocalConvexLine1[i][0].y2())
-                    self.scene.addLine(eraseLine, self.pen)
-                else:
-                    listLocalConvexLine.append(listLocalConvexLine1[i][0])
+        # merge結果
+        listMergeConvexLine1 = []
+        listMergeConvexLine2 = []
+        # 取得所有convex hull上的點
+        listPoint1 = self.getConvexPoint(listLocalConvexLine1)
+        listPoint2 = self.getConvexPoint(listLocalConvexLine2)
+        # 左邊找最下，右邊找最上
+        max_Y = 0
+        min_Y = 600
+        for i in range(len(listPoint1)):
+            if listPoint1[i].y() > max_Y:
+                max_Y = listPoint1[i].y()
+        for i in range(len(listPoint2)):
+            if listPoint2[i].y() < min_Y:
+                min_Y = listPoint2[i].y()
+
+        for i in range(len(listLocalConvexLine1)):
+            listMergeConvexLine1.append(listLocalConvexLine1[i][0])
+        for i in range(len(listLocalConvexLine2)):
+            listMergeConvexLine2.append(listLocalConvexLine2[i][0])
+
+        # 用左邊所有線依序跑右邊所有點
+        for i in range(len(listPoint2)):
+            for j in range(len(listMergeConvexLine1)):
+                if listMergeConvexLine1[j] != None:
+                    direction = self.determineIntersectionRelativePosition(listMergeConvexLine1[j], listPoint2[i])
+                    if direction == 'right':
+                        if listMergeConvexLine1[j].y1() == max_Y:
+                            listMergeConvexLine1[j].setP2(listPoint2[i])
+                        else:
+                            listMergeConvexLine1[j] = None  # 不是最底的直接改成None
+                    # dis1 = self.calculateDistance(listMergeConvexLine1[j].x1(), listMergeConvexLine1[j].y1(), listPoint2[i].x(), listPoint2[i].y())
+                    # dis2 = self.calculateDistance(listMergeConvexLine1[j].x2(), listMergeConvexLine1[j].y2(), listPoint2[i].x(), listPoint2[i].y())
+                    # if dis1 > dis2:
+                        # listMergeConvexLine1[j].setP2(listPoint2[i])
+                    # elif dis1 < dis2:
+                    #     listMergeConvexLine1[j].setP1(listPoint2[i])
+
+                    # self.pen = QtGui.QPen(QtCore.Qt.white)
+                    # eraseLine = QtCore.QLineF(listLocalConvexLine1[j][0].x1(), listLocalConvexLine1[j][0].y1(), listLocalConvexLine1[j][0].x2(), listLocalConvexLine1[j][0].y2())
+                    # self.scene.addLine(eraseLine, self.pen)
+        # 用右邊所有線依序跑左邊所有點
+        for i in range(len(listPoint1)):
+            for j in range(len(listMergeConvexLine2)):
+                if listMergeConvexLine2[j] != None:
+                    direction = self.determineIntersectionRelativePosition(listMergeConvexLine2[j], listPoint1[i])
+                    if direction == 'right':
+                        if listMergeConvexLine2[j].y1() == min_Y:
+                            listMergeConvexLine2[j].setP2(listPoint1[i])
+                        else:
+                            listMergeConvexLine2[j] = None  # 不是最高的直接改成None
+
+
+        return listMergeConvexLine1, listMergeConvexLine2
     
     def getConvexPoint(self, listLocalConvexLine):
         listPoint = []
