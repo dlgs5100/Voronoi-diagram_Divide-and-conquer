@@ -259,15 +259,15 @@ class MainWindow(QtWidgets.QMainWindow):
             listLocalConvexLine2 = self.dividePoint(listPoint[math.ceil(amount/2):])    # 右部
 
             self.scene.clear()
-            listMergeConvexLine1, listMergeConvexLine2 = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
+            listMergeConvexLine1 = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
             
             pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
             for i in range(0, len(listMergeConvexLine1)):
                 if listMergeConvexLine1[i] != None:
                     self.scene.addLine(listMergeConvexLine1[i], pen)
-            for i in range(0, len(listMergeConvexLine2)):
-                if listMergeConvexLine2[i] != None:
-                    self.scene.addLine(listMergeConvexLine2[i], pen)
+            # for i in range(0, len(listMergeConvexLine2)):
+            #     if listMergeConvexLine2[i] != None:
+            #         self.scene.addLine(listMergeConvexLine2[i], pen)
 
         else:
             print(listPoint)
@@ -319,8 +319,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.scene.addLine(listLocalConvexLine[i], pen)
         
         return listLocalConvexLine;
-        
-    def mergeConvex(self, listLocalConvexLine1, listLocalConvexLine2): #還未考慮水平
+    
+    # 1.還未考慮水平and共線
+    # 2.兩條線之中其中一點畫在裡面
+    def mergeConvex(self, listLocalConvexLine1, listLocalConvexLine2): 
         # merge結果
         listMergeConvexLine1 = []
         listMergeConvexLine2 = []
@@ -342,6 +344,9 @@ class MainWindow(QtWidgets.QMainWindow):
         for i in range(len(listLocalConvexLine2)):
             listMergeConvexLine2.append(listLocalConvexLine2[i][0])
 
+        
+        if len(listMergeConvexLine1) == 1:  # 只有兩點構成的一條線
+            listMergeConvexLine1.append(QtCore.QLineF(listMergeConvexLine1[0].x2(), listMergeConvexLine1[0].y2(), listMergeConvexLine1[0].x1(), listMergeConvexLine1[0].y1()))
         # 用左邊所有線依序跑右邊所有點
         for i in range(len(listPoint2)):
             for j in range(len(listMergeConvexLine1)):
@@ -352,17 +357,10 @@ class MainWindow(QtWidgets.QMainWindow):
                             listMergeConvexLine1[j].setP2(listPoint2[i])
                         else:
                             listMergeConvexLine1[j] = None  # 不是最底的直接改成None
-                    # dis1 = self.calculateDistance(listMergeConvexLine1[j].x1(), listMergeConvexLine1[j].y1(), listPoint2[i].x(), listPoint2[i].y())
-                    # dis2 = self.calculateDistance(listMergeConvexLine1[j].x2(), listMergeConvexLine1[j].y2(), listPoint2[i].x(), listPoint2[i].y())
-                    # if dis1 > dis2:
-                        # listMergeConvexLine1[j].setP2(listPoint2[i])
-                    # elif dis1 < dis2:
-                    #     listMergeConvexLine1[j].setP1(listPoint2[i])
-
-                    # self.pen = QtGui.QPen(QtCore.Qt.white)
-                    # eraseLine = QtCore.QLineF(listLocalConvexLine1[j][0].x1(), listLocalConvexLine1[j][0].y1(), listLocalConvexLine1[j][0].x2(), listLocalConvexLine1[j][0].y2())
-                    # self.scene.addLine(eraseLine, self.pen)
-        # 用右邊所有線依序跑左邊所有點
+        
+        if len(listMergeConvexLine2) == 1:  # 只有兩點構成的一條線
+            listMergeConvexLine2.append(QtCore.QLineF(listMergeConvexLine2[0].x2(), listMergeConvexLine2[0].y2(), listMergeConvexLine2[0].x1(), listMergeConvexLine2[0].y1()))
+            # 用右邊所有線依序跑左邊所有點
         for i in range(len(listPoint1)):
             for j in range(len(listMergeConvexLine2)):
                 if listMergeConvexLine2[j] != None:
@@ -373,8 +371,11 @@ class MainWindow(QtWidgets.QMainWindow):
                         else:
                             listMergeConvexLine2[j] = None  # 不是最高的直接改成None
 
+        for i in range(len(listMergeConvexLine2)):
+            if listMergeConvexLine2[i] not in listMergeConvexLine1:
+                listMergeConvexLine1.append(listMergeConvexLine2[i])
 
-        return listMergeConvexLine1, listMergeConvexLine2
+        return listMergeConvexLine1
     
     def getConvexPoint(self, listLocalConvexLine):
         listPoint = []
@@ -462,15 +463,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def determineIntersectionRelativePosition(self, convexLine, point):
         result = (convexLine.x2()-convexLine.x1())*(point.y()-convexLine.y1()) - (convexLine.y2()-convexLine.y1())*(point.x()-convexLine.x1())
-        print(convexLine.x1(), convexLine.y1(), convexLine.x2(), convexLine.y2())
+        # print(convexLine.x1(), convexLine.y1(), convexLine.x2(), convexLine.y2())
         if result > 0:
-            print('right')
+            # print('right')
             return 'right'
         elif result < 0:
-            print('left')
+            # print('left')
             return 'left'
         else:
-            print('line')
+            # print('line')
             return 'line'
 
     def deleteExceedLine(self, convexLine, point):
