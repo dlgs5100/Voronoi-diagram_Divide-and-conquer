@@ -5,6 +5,7 @@ import operator
 import numpy
 import math
 import random
+import copy
 
 mode = 'None' #作為判斷為讀檔或手動
 class GraphicsScene(QtWidgets.QGraphicsScene):
@@ -259,15 +260,18 @@ class MainWindow(QtWidgets.QMainWindow):
             listLocalConvexLine2 = self.dividePoint(listPoint[math.ceil(amount/2):])    # 右部
 
             self.scene.clear()
-            listMergeConvexLine1 = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
+            listMergeConvexLine, listMergePerpendicularBisector, temp1, temp2 = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
             
             pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
-            for i in range(0, len(listMergeConvexLine1)):
-                if listMergeConvexLine1[i] != None:
-                    self.scene.addLine(listMergeConvexLine1[i], pen)
-            # for i in range(0, len(listMergeConvexLine2)):
-            #     if listMergeConvexLine2[i] != None:
-            #         self.scene.addLine(listMergeConvexLine2[i], pen)
+            for item in listMergeConvexLine:
+                self.scene.addLine(item, pen)
+            pen1 = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
+            for item in temp1:
+                self.scene.addLine(item[0], pen1)
+                self.scene.addLine(item[1], pen1)
+            for item in temp2:
+                self.scene.addLine(item[0], pen1)
+                self.scene.addLine(item[1], pen1)
 
         else:
             print(listPoint)
@@ -326,25 +330,29 @@ class MainWindow(QtWidgets.QMainWindow):
         # merge結果
         listMergeConvexLine1 = []
         listMergeConvexLine2 = []
+        listMergePerpendicularBisector = []
+        listLeftInnerConvexLine = []
+        listRightInnerConvexLine = []
         # 取得所有convex hull上的點
         listPoint1 = self.getConvexPoint(listLocalConvexLine1)
         listPoint2 = self.getConvexPoint(listLocalConvexLine2)
         # 左邊找最下，右邊找最上
         max_Y = 0
         min_Y = 600
-        for i in range(len(listPoint1)):
-            if listPoint1[i].y() > max_Y:
-                max_Y = listPoint1[i].y()
-        for i in range(len(listPoint2)):
-            if listPoint2[i].y() < min_Y:
-                min_Y = listPoint2[i].y()
+        for item in listPoint1:
+            if item.y() > max_Y:
+                max_Y = item.y()
+        for item in listPoint2:
+            if item.y() < min_Y:
+                min_Y = item.y()
 
         for i in range(len(listLocalConvexLine1)):
             listMergeConvexLine1.append(listLocalConvexLine1[i][0])
+        listLeftInnerConvexLine = copy.deepcopy(listMergeConvexLine1)
         for i in range(len(listLocalConvexLine2)):
             listMergeConvexLine2.append(listLocalConvexLine2[i][0])
+        listRightInnerConvexLine = copy.deepcopy(listMergeConvexLine2)
 
-        
         if len(listMergeConvexLine1) == 1:  # 只有兩點構成的一條線
             listMergeConvexLine1.append(QtCore.QLineF(listMergeConvexLine1[0].x2(), listMergeConvexLine1[0].y2(), listMergeConvexLine1[0].x1(), listMergeConvexLine1[0].y1()))
         # 用左邊所有線依序跑右邊所有點
@@ -357,6 +365,10 @@ class MainWindow(QtWidgets.QMainWindow):
                             listMergeConvexLine1[j].setP2(listPoint2[i])
                         else:
                             listMergeConvexLine1[j] = None  # 不是最底的直接改成None
+        #取得內部被刪除的convex邊
+        for item in listMergeConvexLine1:
+            if item in listLeftInnerConvexLine:
+                listLeftInnerConvexLine.remove(item)
         
         if len(listMergeConvexLine2) == 1:  # 只有兩點構成的一條線
             listMergeConvexLine2.append(QtCore.QLineF(listMergeConvexLine2[0].x2(), listMergeConvexLine2[0].y2(), listMergeConvexLine2[0].x1(), listMergeConvexLine2[0].y1()))
@@ -370,12 +382,30 @@ class MainWindow(QtWidgets.QMainWindow):
                             listMergeConvexLine2[j].setP2(listPoint1[i])
                         else:
                             listMergeConvexLine2[j] = None  # 不是最高的直接改成None
+        #取得內部被刪除的convex邊
+        for item in listMergeConvexLine2:
+            if item in listRightInnerConvexLine:
+                listRightInnerConvexLine.remove(item)
 
-        for i in range(len(listMergeConvexLine2)):
-            if listMergeConvexLine2[i] not in listMergeConvexLine1:
-                listMergeConvexLine1.append(listMergeConvexLine2[i])
+        try :
+            listMergeConvexLine1.remove(None)
+        except ValueError:
+            pass
 
-        return listMergeConvexLine1
+        for item in listMergeConvexLine2:
+            if item not in listMergeConvexLine1 and item != None:
+                listMergeConvexLine1.append(item)
+
+        # 所有中垂線
+        for item in listLocalConvexLine1:
+            listMergePerpendicularBisector.append(item[1])
+        for item in listLocalConvexLine2:
+            listMergePerpendicularBisector.append(item[1])
+
+        self.drawPerpendicularBisector(listLeftInnerConvexLine)
+        self.drawPerpendicularBisector(listRightInnerConvexLine)
+
+        return listMergeConvexLine1, listMergePerpendicularBisector, listLeftInnerConvexLine, listRightInnerConvexLine
     
     def getConvexPoint(self, listLocalConvexLine):
         listPoint = []
@@ -436,7 +466,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 y2New = 600
         
             line = QtCore.QLineF(x1New, y1New, x2New, y2New)
-            self.scene.addLine(line, pen)
+            # self.scene.addLine(line, pen)
 
             #將該convex line的中垂線資訊加入list中，
             listLocalConvexLine[i] = [listLocalConvexLine[i], line]
