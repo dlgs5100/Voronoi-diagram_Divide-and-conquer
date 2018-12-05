@@ -7,9 +7,12 @@ import math
 import random
 import copy
 
-mode = 'None' #作為判斷為讀檔或手動
+mode = 'None'  # 作為判斷為讀檔或手動
+
+
 class GraphicsScene(QtWidgets.QGraphicsScene):
     moved = QtCore.pyqtSignal(QtWidgets.QGraphicsSceneMouseEvent)
+
     def __init__(self, parent=None):
         QtWidgets.QGraphicsScene.__init__(self, parent)
         self.setSceneRect(0, 0, 600, 600)
@@ -20,7 +23,7 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
         y = event.scenePos().y()
 
         # point = QtCore.QPointF(x, y)
-        point = [x,y]
+        point = [x, y]
         if mode == 'None' or mode == 'user':
             if point in MainWindow.loadPoint:
                 self.dialog = MessageDialog.MessageDialog('Point exsit')
@@ -29,7 +32,7 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
                 pen = QtGui.QPen(QtCore.Qt.red)
                 brush = QtGui.QBrush(QtCore.Qt.red)
                 self.addEllipse(x, y, 1, 1, pen, brush)
-            
+
                 MainWindow.loadPoint.append(point)
                 if not MainWindow.listPointCount:
                     MainWindow.listPointCount.append(0)
@@ -44,15 +47,16 @@ class GraphicsScene(QtWidgets.QGraphicsScene):
     def mouseMoveEvent(self, event):
         self.moved.emit(event)
 
+
 class MainWindow(QtWidgets.QMainWindow):
-    loadPoint = []  #讀檔為雙層list，手動僅單層list
-    listPointCount = [] #判斷多組測資有幾個點，手動必只有一組
-    listConvexLine = [] # 擦掉多的，清空
+    loadPoint = []  # 讀檔為雙層list，手動僅單層list
+    listPointCount = []  # 判斷多組測資有幾個點，手動必只有一組
+    listConvexLine = []  # 擦掉多的，清空
     resultPoint = []
     resultLine = []
-    
+
     def __init__(self):
-        super(MainWindow,self).__init__()
+        super(MainWindow, self).__init__()
         loadUi('MainWindow.ui', self)
 
         self.buttonSet.clicked.connect(self.listenerSet)
@@ -67,6 +71,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.graphicsView.setMouseTracking(True)
         self.graphicsView.setScene(self.scene)
         self.graphicsView.show()
+
     def listenerAutoXY(self, arg):
         self.labelAutoX.setText(str(arg.scenePos().x()))
         self.labelAutoY.setText(str(arg.scenePos().y()))
@@ -77,20 +82,23 @@ class MainWindow(QtWidgets.QMainWindow):
             if (int(self.lineEdit_X.text()) >= 0 and int(self.lineEdit_X.text()) <= 600) and (int(self.lineEdit_Y.text()) >= 0 and int(self.lineEdit_Y.text()) <= 600):
                 if mode == 'None' or mode == 'user':
                     # point = QtCore.QPointF(int(self.lineEdit_X.text()), int(self.lineEdit_Y.text()))
-                    point = [int(self.lineEdit_X.text()), int(self.lineEdit_Y.text())]
-                    
+                    point = [int(self.lineEdit_X.text()),
+                                 int(self.lineEdit_Y.text())]
+
                     if point in self.loadPoint:
-                        self.dialog = MessageDialog.MessageDialog('Point exsit')
+                        self.dialog = MessageDialog.MessageDialog(
+                            'Point exsit')
                         self.dialog.exec_()
                     else:
                         pen = QtGui.QPen(QtCore.Qt.red)
                         brush = QtGui.QBrush(QtCore.Qt.red)
-                        self.scene.addEllipse(point[0], point[1], 1, 1, pen, brush)
+                        self.scene.addEllipse(
+                            point[0], point[1], 1, 1, pen, brush)
                         self.loadPoint.append(point)
                         if not self.listPointCount:
                             self.listPointCount.append(0)
                         self.listPointCount[0] += 1
-                            
+
                         self.graphicsView.show()
 
                     self.lineEdit_X.clear()
@@ -98,10 +106,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     mode = 'user'
                 else:
-                    self.dialog = MessageDialog.MessageDialog("Can't enter now!")
+                    self.dialog = MessageDialog.MessageDialog(
+                        "Can't enter now!")
                     self.dialog.exec_()
             else:
-                self.dialog = MessageDialog.MessageDialog('X or Y out of range')
+                self.dialog = MessageDialog.MessageDialog(
+                    'X or Y out of range')
                 self.dialog.exec_()
         else:
             self.dialog = MessageDialog.MessageDialog('X or Y empty')
@@ -117,14 +127,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resultLine.clear()
         self.scene.clear()
 
-    
     def listenerInput(self):
         global mode
         if mode == 'None':
             self.listPointCount.clear()
             options = QtWidgets.QFileDialog.Options()
             options |= QtWidgets.QFileDialog.DontUseNativeDialog
-            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self, "QFileDialog.getOpenFileName()", "", "All Files (*);;Python Files (*.py)", options=options)
             if fileName:
                 # Testing
                 print(fileName)
@@ -137,10 +147,11 @@ class MainWindow(QtWidgets.QMainWindow):
                         size = int(line)
                         if size > 0:
                             self.listPointCount.append(size)
-                            for i in range (0, size):
+                            for i in range(0, size):
                                 data = f.readline().split()
                                 # point = QtCore.QPointF(list(map(int, data))[0], list(map(int, data))[1])
-                                point = [list(map(int, data))[0], list(map(int, data))[1]]
+                                point = [list(map(int, data))[0],
+                                              list(map(int, data))[1]]
                                 self.loadPoint.append(point)
                         else:
                             break
@@ -155,7 +166,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def listenerOutput(self):
         options = QtWidgets.QFileDialog.Options()
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName, _ = QtWidgets.QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+        fileName, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "QFileDialog.getSaveFileName()", "", "All Files (*);;Python Files (*.py)", options=options)
         if fileName:
             # Testing
             print(fileName)
@@ -196,15 +208,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.listPointCount.pop(0)
 
             # 為了讓讀檔點有顏色
-            if mode != 'user':      
+            if mode != 'user':
                 self.scene.clear()
                 pen = QtGui.QPen(QtCore.Qt.red)
                 brush = QtGui.QBrush(QtCore.Qt.red)
                 for i in range(0, len(listPoint)):
-                    self.scene.addEllipse(listPoint[i][0], listPoint[i][1], 1, 1, pen, brush)
+                    self.scene.addEllipse(
+                        listPoint[i][0], listPoint[i][1], 1, 1, pen, brush)
 
             self.labelAutoAmount.setText(str(len(self.listPointCount)))
-            self.resultPoint , listPoint = self.sortPoint(listPoint)    #resultPoint型態為list，listPoint型態為PointF
+            self.resultPoint, listPoint = self.sortPoint(
+                listPoint)  # resultPoint型態為list，listPoint型態為PointF
             # print(listPoint)
 
             if self.hasDuplicate(listPoint) == False:
@@ -214,7 +228,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # self.drawConvex(listPoint)
 
                 # self.drawPerpendicularBisector(self.listConvexLine)
-                
+
                 # self.point = self.findIntersectionPoint(self.listConvexLine)
 
                 # #判斷有無交點
@@ -227,15 +241,16 @@ class MainWindow(QtWidgets.QMainWindow):
                 #     pen = QtGui.QPen(QtCore.Qt.blue)
                 #     brush = QtGui.QBrush(QtCore.Qt.blue)
                 #     self.scene.addEllipse(self.point.x(), self.point.y(), 1, 1, pen, brush)
-                    
+
                 # self.resultLine = self.sortLine()
             else:
-                self.dialog = MessageDialog.MessageDialog("Exist duplicate data!")
+                self.dialog = MessageDialog.MessageDialog(
+                    "Exist duplicate data!")
                 self.dialog.exec_()
 
     def listenerStep(self):
         print(123)
-        
+
     def sortPoint(self, listPoint):
         resultList = sorted(listPoint, key=operator.itemgetter(0, 1))
         for i in range(0, len(listPoint)):
@@ -246,26 +261,28 @@ class MainWindow(QtWidgets.QMainWindow):
     def sortLine(self):
         resultList = []
         for i in range(0, len(self.listConvexLine)):
-            line = [round(self.listConvexLine[i][1].x1(),0), round(self.listConvexLine[i][1].y1(),0), round(self.listConvexLine[i][1].x2(),0), round(self.listConvexLine[i][1].y2(),0)]
+            line = [round(self.listConvexLine[i][1].x1(), 0), round(self.listConvexLine[i][1].y1(), 0), round(self.listConvexLine[i][1].x2(), 0), round(self.listConvexLine[i][1].y2(), 0)]
             resultList.append(line)
         resultList = sorted(resultList, key=operator.itemgetter(0, 1, 2, 3))
-        
+
         return resultList
 
     def dividePoint(self, listPoint):
-        amount =  len(listPoint)
+        amount = len(listPoint)
         listLocalConvexLine = []
         if amount > 3:
             listLocalConvexLine1 = self.dividePoint(listPoint[:math.ceil(amount/2)])    # 左部
             listLocalConvexLine2 = self.dividePoint(listPoint[math.ceil(amount/2):])    # 右部
 
             # self.scene.clear()
-            listMergeConvexLine, listMergePerpendicularBisector, listLeftInnerConvexLine, listRightInnerConvexLine = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
-            
-            pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
+            listMergeConvexLine, listLeftInnerConvexLine, listLeftPerpendicularBisector, listRightInnerConvexLine, listRightPerpendicularBisector = self.mergeConvex(listLocalConvexLine1, listLocalConvexLine2)
+
+            pen = QtGui.QPen(QtCore.Qt.black)
+            # pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
             for item in listMergeConvexLine:
                 self.scene.addLine(item, pen)
-            pen1 = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
+            pen1 = QtGui.QPen(QtCore.Qt.black)
+            # pen1 = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
             for item in listLeftInnerConvexLine:
                 self.scene.addLine(item[0], pen1)
                 self.scene.addLine(item[1], pen1)
@@ -273,7 +290,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.scene.addLine(item[0], pen1)
                 self.scene.addLine(item[1], pen1)
 
-            self.getHyperplane(listLeftInnerConvexLine, listRightInnerConvexLine)
+            self.getHyperplane(listLeftInnerConvexLine, listLeftPerpendicularBisector, listRightInnerConvexLine, listRightPerpendicularBisector)
 
         else:
             print(listPoint)
@@ -284,108 +301,151 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 intersectionPoint = self.findIntersectionPoint(listLocalConvexLine[0][1], listLocalConvexLine[1][1])
 
-            #判斷有無交點
+            # 判斷有無交點
             if intersectionPoint != None:
                 for i in range(0, len(listLocalConvexLine)):
-                    position = self.determineIntersectionRelativePosition(listLocalConvexLine[i][0] ,intersectionPoint)
+                    position = self.determineIntersectionRelativePosition(listLocalConvexLine[i][0], intersectionPoint)
                     listLocalConvexLine[i].append(position)
                     self.deleteExceedLine(listLocalConvexLine[i], intersectionPoint)
 
-                #補上被擦掉的交點
+                # 補上被擦掉的交點
                 pen = QtGui.QPen(QtCore.Qt.blue)
                 brush = QtGui.QBrush(QtCore.Qt.blue)
                 self.scene.addEllipse(intersectionPoint.x(), intersectionPoint.y(), 1, 1, pen, brush)
 
-            return listLocalConvexLine       
+            return listLocalConvexLine
             # self.resultLine = self.sortLine()
 
-    def getHyperplane(self, listLeftInnerConvexLine, listRightInnerConvexLine):
+    def getHyperplane(self, listLeftInnerConvexLine, listLeftPerpendicularBisector, listRightInnerConvexLine, listRightPerpendicularBisector):
+        listAuxiliaryLine = []
         listHyperplane = []
         listLeftPoint = []
         listLeftPoint = self.getConvexPoint(listLeftInnerConvexLine)
         listRightPoint = self.getConvexPoint(listRightInnerConvexLine)
         listLeftPoint = sorted(listLeftPoint, key=lambda s: s.y())
         listRightPoint = sorted(listRightPoint, key=lambda s: s.y())
+        touchPos = 'Null'
 
-        # min_X_left = 0
-        # min_Y_left = 600    # 最高點
-        # for item in listLeftPoint:
-        #     if item.y() < min_Y_left:
-        #         min_X_left = item.x()
-        #         min_Y_left = item.y()
-        
-        # # min_X_right = 0
-        # min_Y_right = 600    # 最高點
-        # for item in listRightPoint:
-        #     if item.y() < min_Y_right:
-        #         min_X_right = item.x()
-        #         min_Y_right = item.y()
-
-        
-        #第一條虛線，先左連右試試看
+        # 第一條虛線，先左連右試試看
         indexLeft = 0
         indexRight = 0
-        listHyperplane.append(QtCore.QLineF(listRightPoint[indexLeft], listLeftPoint[indexRight]))
-        
-        listHyperplane = self.drawPerpendicularBisector(listHyperplane)
-        if listHyperplane[0][1].y1() != 0:
-            temp = listHyperplane[0][1].p1()
-            listHyperplane[0][1].setP1(listHyperplane[0][1].p2())
-            listHyperplane[0][1].setP2(temp)
+        indexHyperplane = 0
+        latestX2 = 0
+        latestY2 = 0
+        isFirstHyperplane = True
+        for i in range(0,3):
+            # if len(listLeftPoint) == indexLeft or len(listRightPoint) == indexRight:
+            #     break
+            # Hyperplane輔助線
+            listAuxiliaryLine.append(QtCore.QLineF(listRightPoint[indexRight], listLeftPoint[indexLeft]))
+            pen = QtGui.QPen(QtCore.Qt.blue)
+            self.scene.addLine(listAuxiliaryLine[i], pen)
 
-        intersectionPoint = QtCore.QPointF(600,600) # Initialize
-        for item in listLeftInnerConvexLine:
-            point = self.findIntersectionPoint(listHyperplane[0][1], item[1])
-            if point != None and point.y() < intersectionPoint.y():
-                intersectionPoint = point
-        for item in listRightInnerConvexLine:
-            point = self.findIntersectionPoint(listHyperplane[0][1], item[1])
-            if point != None and point.y() < intersectionPoint.y():
-                intersectionPoint = point
+            # 每次都用輔助線重新畫中垂線
+            temp = copy.deepcopy(listAuxiliaryLine)
+            listHyperplane = copy.deepcopy(self.drawPerpendicularBisector(temp))
 
-        listHyperplane[0][1].setP2(intersectionPoint)
+            print('latestX2:', latestX2)
+            print('latestY2:', latestY2)
+            #讓線P1是上面，P2是下面
+            if listHyperplane[indexHyperplane][1].y1() > listHyperplane[indexHyperplane][1].y2():
+                temp = listHyperplane[indexHyperplane][1].p1()
+                listHyperplane[indexHyperplane][1].setP1(listHyperplane[0][1].p2())
+                listHyperplane[indexHyperplane][1].setP2(temp)
+            elif listHyperplane[indexHyperplane][1].y1() == listHyperplane[indexHyperplane][1].y2():
+                print('Error in getHyperplane()')
+            
+            if isFirstHyperplane == False:
+                listHyperplane[indexHyperplane][1].setP1(QtCore.QPointF(latestX2, latestY2))
 
-        pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
-        self.scene.addLine(listHyperplane[0][1], pen)
+            intersectionPoint = QtCore.QPointF(600, 600) # Initialize
+            for item in listLeftPerpendicularBisector:
+                point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item)
+                if point != None and point.y() < intersectionPoint.y() and point.y() > listHyperplane[indexHyperplane][1].y1():
+                    intersectionPoint = point
+                    touchPos = 'Left'
+            for item in listRightPerpendicularBisector:
+                point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item)
+                if point != None and point.y() < intersectionPoint.y() and point.y() > listHyperplane[indexHyperplane][1].y1():
+                    intersectionPoint = point
+                    touchPos = 'Right'
+            # for item in listLeftInnerConvexLine:
+            #     point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item[1])
+            #     if point != None and point.y() < intersectionPoint.y():
+            #         intersectionPoint = point
+            #         touchPos = 'Left'
+            # for item in listRightInnerConvexLine:
+            #     point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item[1])
+            #     if point != None and point.y() < intersectionPoint.y():
+            #         intersectionPoint = point
+            #         touchPos = 'Right'
 
+            print(touchPos)
+            listHyperplane[indexHyperplane][1].setP2(intersectionPoint)
+            latestX2 = intersectionPoint.x()
+            latestY2 = intersectionPoint.y()
+
+            pen = QtGui.QPen(QtCore.Qt.red)
+            self.scene.addLine(listHyperplane[indexHyperplane][1], pen)
+
+            indexHyperplane += 1
+            if touchPos == 'Left':
+                indexLeft = indexHyperplane
+            elif touchPos == 'Right':
+                indexRight = indexHyperplane
+            else:
+                print('Hyperplane error')
+
+            # latestY2 = listHyperplane[indexHyperplane][1].y2()
+            isFirstHyperplane = False
 
     def drawConvex(self, listPoint):
         listLocalConvexLine = []
-        #將讀入典改為逆時針
+        # 將讀入典改為逆時針
         if len(listPoint) == 2:
-            listLocalConvexLine.append(QtCore.QLineF(listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
+            listLocalConvexLine.append(QtCore.QLineF(
+                listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
         elif len(listPoint) == 3:
-            #先畫前三個點
-            order = (listPoint[1].x()-listPoint[0].x())*(listPoint[2].y()-listPoint[0].y()) - (listPoint[1].y()-listPoint[0].y())*(listPoint[2].x()-listPoint[0].x())
+            # 先畫前三個點
+            order = (listPoint[1].x()-listPoint[0].x())*(listPoint[2].y()-listPoint[0].y()) - (
+                listPoint[1].y()-listPoint[0].y())*(listPoint[2].x()-listPoint[0].x())
             if order < 0:   # 原逆時針
                 # print('逆')
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[1].x(), listPoint[1].y(), listPoint[2].x(), listPoint[2].y()))
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[2].x(), listPoint[2].y(), listPoint[0].x(), listPoint[0].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[1].x(), listPoint[1].y(), listPoint[2].x(), listPoint[2].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[2].x(), listPoint[2].y(), listPoint[0].x(), listPoint[0].y()))
             elif order > 0:     # 原順時針
                 # print('順')
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[0].x(), listPoint[0].y(), listPoint[2].x(), listPoint[2].y()))
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[2].x(), listPoint[2].y(), listPoint[1].x(), listPoint[1].y()))
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[1].x(), listPoint[1].y(), listPoint[0].x(), listPoint[0].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[0].x(), listPoint[0].y(), listPoint[2].x(), listPoint[2].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[2].x(), listPoint[2].y(), listPoint[1].x(), listPoint[1].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[1].x(), listPoint[1].y(), listPoint[0].x(), listPoint[0].y()))
             else:
                 # print('共')
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
-                listLocalConvexLine.append(QtCore.QLineF(listPoint[1].x(), listPoint[1].y(), listPoint[2].x(), listPoint[2].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[0].x(), listPoint[0].y(), listPoint[1].x(), listPoint[1].y()))
+                listLocalConvexLine.append(QtCore.QLineF(
+                    listPoint[1].x(), listPoint[1].y(), listPoint[2].x(), listPoint[2].y()))
 
-        pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
+        pen = QtGui.QPen(QtGui.QColor(random.randint(30, 255), random.randint(30,255), random.randint(30,255)))
         # 3 point
         # for i in range(0, len(listLocalConvexLine)):
         #     self.scene.addLine(listLocalConvexLine[i], pen)
-        
-        return listLocalConvexLine;
-    
+
+        return listLocalConvexLine
+
     # 1.還未考慮水平and共線
     # 2.兩條線之中其中一點畫在裡面
-    def mergeConvex(self, listLocalConvexLine1, listLocalConvexLine2): 
+    def mergeConvex(self, listLocalConvexLine1, listLocalConvexLine2):
         # merge結果
         listMergeConvexLine1 = []
         listMergeConvexLine2 = []
-        listMergePerpendicularBisector = []
+        # listMergePerpendicularBisector = []
         listLeftInnerConvexLine = []
         listRightInnerConvexLine = []
         # 取得所有convex hull上的點
@@ -401,40 +461,49 @@ class MainWindow(QtWidgets.QMainWindow):
             if item.y() < min_Y:
                 min_Y = item.y()
 
+        # 複製
+        temp1 = []
+        temp2 = []
         for i in range(len(listLocalConvexLine1)):
-            listMergeConvexLine1.append(listLocalConvexLine1[i][0])
+            temp1.append(listLocalConvexLine1[i][0])
+        listMergeConvexLine1 = copy.deepcopy(temp1)
         listLeftInnerConvexLine = copy.deepcopy(listMergeConvexLine1)
         for i in range(len(listLocalConvexLine2)):
-            listMergeConvexLine2.append(listLocalConvexLine2[i][0])
+            temp2.append(listLocalConvexLine2[i][0])
+        listMergeConvexLine2 = copy.deepcopy(temp2)
         listRightInnerConvexLine = copy.deepcopy(listMergeConvexLine2)
 
         if len(listMergeConvexLine1) == 1:  # 只有兩點構成的一條線
-            listMergeConvexLine1.append(QtCore.QLineF(listMergeConvexLine1[0].x2(), listMergeConvexLine1[0].y2(), listMergeConvexLine1[0].x1(), listMergeConvexLine1[0].y1()))
+            listMergeConvexLine1.append(QtCore.QLineF(listMergeConvexLine1[0].x2(
+            ), listMergeConvexLine1[0].y2(), listMergeConvexLine1[0].x1(), listMergeConvexLine1[0].y1()))
         # 用左邊所有線依序跑右邊所有點
         for i in range(len(listPoint2)):
             for j in range(len(listMergeConvexLine1)):
                 if listMergeConvexLine1[j] != None:
-                    direction = self.determineIntersectionRelativePosition(listMergeConvexLine1[j], listPoint2[i])
+                    direction = self.determineIntersectionRelativePosition(
+                        listMergeConvexLine1[j], listPoint2[i])
                     if direction == 'right':
                         if listMergeConvexLine1[j].y1() == max_Y:
                             listMergeConvexLine1[j].setP2(listPoint2[i])
                         else:
                             listMergeConvexLine1[j] = None  # 不是最底的直接改成None
-        
+
         if len(listMergeConvexLine2) == 1:  # 只有兩點構成的一條線
-            listMergeConvexLine2.append(QtCore.QLineF(listMergeConvexLine2[0].x2(), listMergeConvexLine2[0].y2(), listMergeConvexLine2[0].x1(), listMergeConvexLine2[0].y1()))
+            listMergeConvexLine2.append(QtCore.QLineF(listMergeConvexLine2[0].x2(
+            ), listMergeConvexLine2[0].y2(), listMergeConvexLine2[0].x1(), listMergeConvexLine2[0].y1()))
             # 用右邊所有線依序跑左邊所有點
         for i in range(len(listPoint1)):
             for j in range(len(listMergeConvexLine2)):
                 if listMergeConvexLine2[j] != None:
-                    direction = self.determineIntersectionRelativePosition(listMergeConvexLine2[j], listPoint1[i])
+                    direction = self.determineIntersectionRelativePosition(
+                        listMergeConvexLine2[j], listPoint1[i])
                     if direction == 'right':
                         if listMergeConvexLine2[j].y1() == min_Y:
                             listMergeConvexLine2[j].setP2(listPoint1[i])
                         else:
                             listMergeConvexLine2[j] = None  # 不是最高的直接改成None
-        
-        try :
+
+        try:
             listMergeConvexLine1.remove(None)
         except ValueError:
             pass
@@ -444,31 +513,46 @@ class MainWindow(QtWidgets.QMainWindow):
                 listMergeConvexLine1.append(item)
 
         # 所有中垂線
+        listLeftPerpendicularBisector = []
+        listRightPerpendicularBisector = []
         for item in listLocalConvexLine1:
-            listMergePerpendicularBisector.append(item[1])
+            listLeftPerpendicularBisector.append(item[1])
         for item in listLocalConvexLine2:
-            listMergePerpendicularBisector.append(item[1])
+            listRightPerpendicularBisector.append(item[1])
 
-        #取得內部被刪除的convex邊
+        # 取得內部被刪除的convex邊(左)
         if len(listLeftInnerConvexLine) > 2:
             for item in listMergeConvexLine1:
                 if item in listLeftInnerConvexLine:
                     listLeftInnerConvexLine.remove(item)
-        self.drawPerpendicularBisector(listLeftInnerConvexLine)
+        # 讓inner convex hull的線包含中垂(暫時不用)
+        for i in range(len(listLeftInnerConvexLine)):
+            for j in range(len(listLocalConvexLine1)):
+                if listLeftInnerConvexLine[i] == listLocalConvexLine1[j][0]:
+                    listLeftInnerConvexLine[i] = [
+                        listLeftInnerConvexLine[i], listLocalConvexLine1[j][1]]
 
+        # 取得內部被刪除的convex邊(右)
         if len(listRightInnerConvexLine) > 2:
             for item in listMergeConvexLine2:
                 if item in listRightInnerConvexLine:
                     listRightInnerConvexLine.remove(item)
-        self.drawPerpendicularBisector(listRightInnerConvexLine)
+        # 讓inner convex hull的線包含中垂(暫時不用)
+        for i in range(len(listRightInnerConvexLine)):
+            for j in range(len(listLocalConvexLine2)):
+                if listRightInnerConvexLine[i] == listLocalConvexLine2[j][0]:
+                    listRightInnerConvexLine[i] = [
+                        listRightInnerConvexLine[i], listLocalConvexLine2[j][1]]
 
-        return listMergeConvexLine1, listMergePerpendicularBisector, listLeftInnerConvexLine, listRightInnerConvexLine
+        return listMergeConvexLine1, listLeftInnerConvexLine, listLeftPerpendicularBisector, listRightInnerConvexLine, listRightPerpendicularBisector
 
     def getConvexPoint(self, listLocalConvexLine):
         listPoint = []
         for i in range(len(listLocalConvexLine)):
-            point1 = QtCore.QPointF(listLocalConvexLine[i][0].x1(), listLocalConvexLine[i][0].y1())
-            point2 = QtCore.QPointF(listLocalConvexLine[i][0].x2(), listLocalConvexLine[i][0].y2())
+            point1 = QtCore.QPointF(
+                listLocalConvexLine[i][0].x1(), listLocalConvexLine[i][0].y1())
+            point2 = QtCore.QPointF(
+                listLocalConvexLine[i][0].x2(), listLocalConvexLine[i][0].y2())
             if point1 not in listPoint:
                 listPoint.append(point1)
             if point2 not in listPoint:
@@ -477,13 +561,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def drawPerpendicularBisector(self, listLocalConvexLine):
 
-        pen = QtGui.QPen(QtGui.QColor(random.randint(30,255), random.randint(30,255), random.randint(30,255)))
+        pen = QtGui.QPen(QtGui.QColor(random.randint(30, 255), random.randint(30,255), random.randint(30,255)))
         for i in range(0, len(listLocalConvexLine)):
-            midpointX = (listLocalConvexLine[i].x1()+listLocalConvexLine[i].x2())/2
-            midpointY = (listLocalConvexLine[i].y1()+listLocalConvexLine[i].y2())/2
+            midpointX = (listLocalConvexLine[i].x1(
+            )+listLocalConvexLine[i].x2())/2
+            midpointY = (listLocalConvexLine[i].y1(
+            )+listLocalConvexLine[i].y2())/2
             # Perpendicular Bisector slope
             if (listLocalConvexLine[i].y2()-listLocalConvexLine[i].y1()) != 0:    # 中垂腺斜率無限
-                m = -(listLocalConvexLine[i].x2()-listLocalConvexLine[i].x1()) / (listLocalConvexLine[i].y2()-listLocalConvexLine[i].y1())
+                m = -(listLocalConvexLine[i].x2()-listLocalConvexLine[i].x1()) / (
+                    listLocalConvexLine[i].y2()-listLocalConvexLine[i].y1())
                 c = midpointY-(m*midpointX)
                 if m > 0:
                     x1New = 0
@@ -521,32 +608,33 @@ class MainWindow(QtWidgets.QMainWindow):
                 x2New = midpointX
                 y1New = 0
                 y2New = 600
-        
+
             line = QtCore.QLineF(x1New, y1New, x2New, y2New)
             # self.scene.addLine(line, pen)
 
-            #將該convex line的中垂線資訊加入list中，
+            # 將該convex line的中垂線資訊加入list中，
             listLocalConvexLine[i] = [listLocalConvexLine[i], line]
-            
+
         return listLocalConvexLine
 
     def findIntersectionPoint(self, line1, line2):
-        IntersectionPoint = QtCore.QPointF(0,0)
+        IntersectionPoint = QtCore.QPointF(0, 0)
         # 用前兩個convex line去找交點
         result = line1.intersect(line2, IntersectionPoint)
-            
+
         if result == 0:
             print("No Intersection!")
             return None
         else:
             # Testing Intersection point
-            print('交點:', round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
-                
+            print('交點:', round(IntersectionPoint.x(), 1), round(IntersectionPoint.y(),1))
+
             # return QtCore.QPointF(round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
             return IntersectionPoint
 
     def determineIntersectionRelativePosition(self, convexLine, point):
-        result = (convexLine.x2()-convexLine.x1())*(point.y()-convexLine.y1()) - (convexLine.y2()-convexLine.y1())*(point.x()-convexLine.x1())
+        result = (convexLine.x2()-convexLine.x1())*(point.y()-convexLine.y1()) - \
+                  (convexLine.y2()-convexLine.y1())*(point.x()-convexLine.x1())
         # print(convexLine.x1(), convexLine.y1(), convexLine.x2(), convexLine.y2())
         if result > 0:
             # print('right')
@@ -563,10 +651,10 @@ class MainWindow(QtWidgets.QMainWindow):
         midPointY = (convexLine[0].y1()+convexLine[0].y2())/2
         # 交點function回傳精度過高，以此避免
         if abs(midPointX-point.x()) < 0.01:
-            midPointX = point.x() 
+            midPointX = point.x()
         if abs(midPointY-point.y()) < 0.01:
-            midPointY = point.y() 
-        
+            midPointY = point.y()
+
         # 由逆時針順序判斷點在線的哪邊
         if convexLine[2] == 'left':
             vectorX = point.x()-midPointX
@@ -578,15 +666,14 @@ class MainWindow(QtWidgets.QMainWindow):
             vectorX = 0
             vectorY = 0
 
-        
         if (point.x()-midPointX) != 0:  # 正常情況
             m = (point.y()-midPointY) / (point.x()-midPointX)
             c = point.y()-(m*point.x())
         else:
-            if (point.y()-midPointY) == 0: # 交點在線上
-                m = -(convexLine[0].x1()-convexLine[0].x2()) / (convexLine[0].y1()-convexLine[0].y2())
+            if (point.y()-midPointY) == 0:  # 交點在線上
+                m = -(convexLine[0].x1()-convexLine[0].x2()) / \
+                      (convexLine[0].y1()-convexLine[0].y2())
                 c = point.y()-(m*point.x())
-        
 
         if vectorX > 0:
             drawPointX = 600
@@ -602,37 +689,41 @@ class MainWindow(QtWidgets.QMainWindow):
                 drawPointY = point.y()
         else:
             drawPointX = point.x()
-            if vectorY > 0: # 垂直
+            if vectorY > 0:  # 垂直
                 drawPointY = 600
-            elif vectorY < 0: # 水平
+            elif vectorY < 0:  # 水平
                 drawPointY = 0
-            else: # 點在線上
+            else:  # 點在線上
                 if convexLine[0].x1()-convexLine[0].x2() > 0 and convexLine[0].y1()-convexLine[0].y2() > 0:
                     drawPointX = 0
-                elif convexLine[0].x1()-convexLine[0].x2() > 0 and convexLine[0].y1()-convexLine[0].y2() < 0: 
+                elif convexLine[0].x1()-convexLine[0].x2() > 0 and convexLine[0].y1()-convexLine[0].y2() < 0:
                     drawPointX = 600
-                elif convexLine[0].x1()-convexLine[0].x2() < 0 and convexLine[0].y1()-convexLine[0].y2() > 0: 
+                elif convexLine[0].x1()-convexLine[0].x2() < 0 and convexLine[0].y1()-convexLine[0].y2() > 0:
                     drawPointX = 0
-                elif convexLine[0].x1()-convexLine[0].x2() < 0 and convexLine[0].y1()-convexLine[0].y2() < 0: 
+                elif convexLine[0].x1()-convexLine[0].x2() < 0 and convexLine[0].y1()-convexLine[0].y2() < 0:
                     drawPointX = 600
                 drawPointY = m*drawPointX+c
 
         if drawPointX != point.x() or drawPointY != point.y():
             self.pen = QtGui.QPen(QtCore.Qt.white)
-            eraseLine = QtCore.QLineF(point.x(), point.y(), drawPointX, drawPointY)
+            eraseLine = QtCore.QLineF(
+                point.x(), point.y(), drawPointX, drawPointY)
             self.scene.addLine(eraseLine, self.pen)
 
-            distance1 = self.calculateDistance(convexLine[1].x1(), convexLine[1].y1(), drawPointX, drawPointY)
-            distance2 = self.calculateDistance(convexLine[1].x2(), convexLine[1].y2(), drawPointX, drawPointY)
+            distance1 = self.calculateDistance(
+                convexLine[1].x1(), convexLine[1].y1(), drawPointX, drawPointY)
+            distance2 = self.calculateDistance(
+                convexLine[1].x2(), convexLine[1].y2(), drawPointX, drawPointY)
             if distance1 < distance2:
                 convexLine[1].setP1(QtCore.QPointF(point.x(), point.y()))
             else:
                 convexLine[1].setP2(QtCore.QPointF(point.x(), point.y()))
 
-            print('Voronoi: ' ,convexLine[1])
+            print('Voronoi: ' , convexLine[1])
+
     def calculateDistance(self, x1, y1, x2, y2):
-        return numpy.sqrt(pow(x1-x2,2) + pow(y1-y2,2))
-    
+        return numpy.sqrt(pow(x1-x2, 2) + pow(y1-y2,2))
+
     def hasDuplicate(self, list):
         temp = []
         for item in list:
