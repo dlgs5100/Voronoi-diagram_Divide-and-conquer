@@ -358,6 +358,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if isFirstHyperplane == False:
                 listHyperplane[indexHyperplane][1].setP1(QtCore.QPointF(latestX2, latestY2))
 
+            #判斷哪個中垂線最先有交點
             intersectionPoint = QtCore.QPointF(600, 600) # Initialize
             for item in listLeftPerpendicularBisector:
                 point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item)
@@ -390,9 +391,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
             indexHyperplane += 1
             if touchPos == 'Left':
-                indexLeft = indexHyperplane
+                indexLeft += 1
             elif touchPos == 'Right':
-                indexRight = indexHyperplane
+                indexRight += 1
             else:
                 print('Hyperplane error')
 
