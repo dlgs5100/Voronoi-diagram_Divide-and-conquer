@@ -325,6 +325,8 @@ class MainWindow(QtWidgets.QMainWindow):
         listLeftPoint = sorted(listLeftPoint, key=lambda s: s.y())
         listRightPoint = sorted(listRightPoint, key=lambda s: s.y())
         touchPos = 'Null'
+        # print('listLeftPoint:', listLeftPoint)
+        # print('listRightPoint:', listRightPoint)
 
         # 第一條虛線，先左連右試試看
         indexLeft = 0
@@ -343,14 +345,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # 每次都用輔助線重新畫中垂線
             temp = copy.deepcopy(listAuxiliaryLine)
-            listHyperplane = copy.deepcopy(self.drawPerpendicularBisector(temp))
+            listHyperplane.append(self.drawPerpendicularBisector(temp)[indexHyperplane])
+            # listHyperplane = copy.deepcopy(self.drawPerpendicularBisector(temp))
 
             print('latestX2:', latestX2)
             print('latestY2:', latestY2)
             #讓線P1是上面，P2是下面
             if listHyperplane[indexHyperplane][1].y1() > listHyperplane[indexHyperplane][1].y2():
                 temp = listHyperplane[indexHyperplane][1].p1()
-                listHyperplane[indexHyperplane][1].setP1(listHyperplane[0][1].p2())
+                listHyperplane[indexHyperplane][1].setP1(listHyperplane[indexHyperplane][1].p2())
                 listHyperplane[indexHyperplane][1].setP2(temp)
             elif listHyperplane[indexHyperplane][1].y1() == listHyperplane[indexHyperplane][1].y2():
                 print('Error in getHyperplane()')
@@ -360,28 +363,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
             #判斷哪個中垂線最先有交點
             intersectionPoint = QtCore.QPointF(600, 600) # Initialize
+            deletePerpendicularBisector = None
             for item in listLeftPerpendicularBisector:
                 point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item)
                 if point != None and point.y() < intersectionPoint.y() and point.y() > listHyperplane[indexHyperplane][1].y1():
                     intersectionPoint = point
                     touchPos = 'Left'
+                    deletePerpendicularBisector = item
             for item in listRightPerpendicularBisector:
                 point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item)
                 if point != None and point.y() < intersectionPoint.y() and point.y() > listHyperplane[indexHyperplane][1].y1():
                     intersectionPoint = point
                     touchPos = 'Right'
-            # for item in listLeftInnerConvexLine:
-            #     point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item[1])
-            #     if point != None and point.y() < intersectionPoint.y():
-            #         intersectionPoint = point
-            #         touchPos = 'Left'
-            # for item in listRightInnerConvexLine:
-            #     point = self.findIntersectionPoint(listHyperplane[indexHyperplane][1], item[1])
-            #     if point != None and point.y() < intersectionPoint.y():
-            #         intersectionPoint = point
-            #         touchPos = 'Right'
+                    deletePerpendicularBisector = item
+            
 
-            print(touchPos)
+            print(indexHyperplane, ':', touchPos)
             listHyperplane[indexHyperplane][1].setP2(intersectionPoint)
             latestX2 = intersectionPoint.x()
             latestY2 = intersectionPoint.y()
@@ -390,9 +387,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.scene.addLine(listHyperplane[indexHyperplane][1], pen)
 
             indexHyperplane += 1
-            if touchPos == 'Left':
+            if touchPos == 'Left' and deletePerpendicularBisector != None:
+                listLeftPerpendicularBisector.remove(deletePerpendicularBisector)
                 indexLeft += 1
-            elif touchPos == 'Right':
+            elif touchPos == 'Right' and deletePerpendicularBisector != None:
+                listRightPerpendicularBisector.remove(deletePerpendicularBisector)
                 indexRight += 1
             else:
                 print('Hyperplane error')
@@ -570,8 +569,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )+listLocalConvexLine[i].y2())/2
             # Perpendicular Bisector slope
             if (listLocalConvexLine[i].y2()-listLocalConvexLine[i].y1()) != 0:    # 中垂腺斜率無限
-                m = -(listLocalConvexLine[i].x2()-listLocalConvexLine[i].x1()) / (
-                    listLocalConvexLine[i].y2()-listLocalConvexLine[i].y1())
+                m = -(listLocalConvexLine[i].x2()-listLocalConvexLine[i].x1()) / (listLocalConvexLine[i].y2()-listLocalConvexLine[i].y1())
                 c = midpointY-(m*midpointX)
                 if m > 0:
                     x1New = 0
@@ -623,19 +621,22 @@ class MainWindow(QtWidgets.QMainWindow):
         # 用前兩個convex line去找交點
         result = line1.intersect(line2, IntersectionPoint)
 
-        if result == 0:
-            print("No Intersection!")
-            return None
-        else:
-            # Testing Intersection point
-            print('交點:', round(IntersectionPoint.x(), 1), round(IntersectionPoint.y(),1))
+        # if result == 0:
+        #     print("No Intersection!")
+        #     return None
+        # else:
+        #     # Testing Intersection point
+        #     # print('交點:', round(IntersectionPoint.x(), 1), round(IntersectionPoint.y(),1))
 
-            # return QtCore.QPointF(round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
+        #     # return QtCore.QPointF(round(IntersectionPoint.x(),1), round(IntersectionPoint.y(),1))
+        #     return IntersectionPoint
+        if result == 1:
             return IntersectionPoint
+        else:
+            return None
 
     def determineIntersectionRelativePosition(self, convexLine, point):
-        result = (convexLine.x2()-convexLine.x1())*(point.y()-convexLine.y1()) - \
-                  (convexLine.y2()-convexLine.y1())*(point.x()-convexLine.x1())
+        result = (convexLine.x2()-convexLine.x1())*(point.y()-convexLine.y1()) - (convexLine.y2()-convexLine.y1())*(point.x()-convexLine.x1())
         # print(convexLine.x1(), convexLine.y1(), convexLine.x2(), convexLine.y2())
         if result > 0:
             # print('right')
@@ -672,8 +673,7 @@ class MainWindow(QtWidgets.QMainWindow):
             c = point.y()-(m*point.x())
         else:
             if (point.y()-midPointY) == 0:  # 交點在線上
-                m = -(convexLine[0].x1()-convexLine[0].x2()) / \
-                      (convexLine[0].y1()-convexLine[0].y2())
+                m = -(convexLine[0].x1()-convexLine[0].x2()) / (convexLine[0].y1()-convexLine[0].y2())
                 c = point.y()-(m*point.x())
 
         if vectorX > 0:
@@ -720,7 +720,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 convexLine[1].setP2(QtCore.QPointF(point.x(), point.y()))
 
-            print('Voronoi: ' , convexLine[1])
+            # print('Voronoi: ' , convexLine[1])
 
     def calculateDistance(self, x1, y1, x2, y2):
         return numpy.sqrt(pow(x1-x2, 2) + pow(y1-y2,2))
