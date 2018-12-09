@@ -399,7 +399,8 @@ class MainWindow(QtWidgets.QMainWindow):
             
             if isFirstHyperplane == False:
                 listHyperplane[indexHyperplane][1].setP1(QtCore.QPointF(latestX2, latestY2))
-
+                
+            touchPos = 'Null'
             if not(len(listLeftPoint)-1 == indexLeft and len(listRightPoint)-1 == indexRight):
                 #判斷哪個中垂線最先有交點
                 intersectionPoint = QtCore.QPointF(600, 600) # Initialize
@@ -421,6 +422,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 listHyperplane[indexHyperplane][1].setP2(intersectionPoint)
                 latestX2 = intersectionPoint.x()
                 latestY2 = intersectionPoint.y()
+            if touchPos == 'Null':
+                break
 
             self.listStep.append([listHyperplane[indexHyperplane][1]])
             self.listAllLine.append(listHyperplane[indexHyperplane][1])
@@ -428,7 +431,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # pen = QtGui.QPen(QtCore.Qt.red)
             # self.scene.addLine(listHyperplane[indexHyperplane][1], pen)
 
-            if len(listLeftPoint)-1 == indexLeft and len(listRightPoint)-1 == indexRight:
+            if len(listLeftPoint)-1 <= indexLeft and len(listRightPoint)-1 <= indexRight:
                 break
             indexHyperplane += 1
             if touchPos == 'Left' and deletePerpendicularBisector != None:
