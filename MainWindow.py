@@ -59,6 +59,14 @@ class MainWindow(QtWidgets.QMainWindow):
     listAllPoint = []
     indexStep = 0
 
+    typePoint = "<class 'PyQt5.QtCore.QPointF'>"
+    typeLine = "<class 'PyQt5.QtCore.QLineF'>"
+    typeNone = "<class 'NoneType'>"
+    penBlack = QtGui.QPen(QtCore.Qt.black)
+    penBlue = QtGui.QPen(QtCore.Qt.blue)
+    penRed = QtGui.QPen(QtCore.Qt.red)
+    brush = QtGui.QBrush(QtCore.Qt.blue)
+
     def __init__(self):
         super(MainWindow, self).__init__()
         loadUi('MainWindow.ui', self)
@@ -236,14 +244,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.dialog.exec_()
 
     def listenerStep(self):
-        typePoint = "<class 'PyQt5.QtCore.QPointF'>"
-        typeLine = "<class 'PyQt5.QtCore.QLineF'>"
-        typeNone = "<class 'NoneType'>"
-        penBlack = QtGui.QPen(QtCore.Qt.black)
-        penBlue = QtGui.QPen(QtCore.Qt.blue)
-        penRed = QtGui.QPen(QtCore.Qt.red)
-        brush = QtGui.QBrush(QtCore.Qt.blue)
-
         if self.indexStep >= len(self.listStep):
             self.dialog = MessageDialog.MessageDialog("End!")
             self.dialog.exec_()
@@ -251,20 +251,20 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.indexStep != 0:
                 for item in self.listStep[self.indexStep-1]:
                     typeItem = str(type(item))
-                    if typeItem == typePoint:
-                        self.scene.addEllipse(item.x(), item.y(), 1, 1, penBlue, brush)
-                    elif typeItem == typeLine:
-                        self.scene.addLine(item, penBlack)
-                    elif typeItem == typeNone:
+                    if typeItem == self.typePoint:
+                        self.scene.addEllipse(item.x(), item.y(), 1, 1, self.penBlue, self.brush)
+                    elif typeItem == self.typeLine:
+                        self.scene.addLine(item, self.penBlack)
+                    elif typeItem == self.typeNone:
                         self.scene.clear()
 
             for item in self.listStep[self.indexStep]:
                 typeItem = str(type(item))
-                if typeItem == typePoint:
-                    self.scene.addEllipse(item.x(), item.y(), 1, 1, penRed, brush)
-                elif typeItem == typeLine:
-                    self.scene.addLine(item, penRed)
-                elif typeItem == typeNone:
+                if typeItem == self.typePoint:
+                    self.scene.addEllipse(item.x(), item.y(), 1, 1, self.penRed, self.brush)
+                elif typeItem == self.typeLine:
+                    self.scene.addLine(item, self.penRed)
+                elif typeItem == self.typeNone:
                     self.scene.clear()
             self.indexStep += 1
 
@@ -307,6 +307,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.listStep.append(temp)  # 重新載入中垂線
 
             self.listAllLine.extend(listMergeConvexLine)
+
+            tempResult = []
+            tempResult.extend(point)
+            tempResult.extend(listLeftPerpendicularBisector)
+            tempResult.extend(listRightPerpendicularBisector)
             # ---------------------------------------------------------------------------------------------
         
             # pen = QtGui.QPen(QtCore.Qt.black)
@@ -326,7 +331,20 @@ class MainWindow(QtWidgets.QMainWindow):
             # for item in listRightPerpendicularBisector:
             #     self.scene.addLine(item, pen1)
 
-            self.getHyperplane(listLeftInnerConvexLine, listLeftPerpendicularBisector, listRightInnerConvexLine, listRightPerpendicularBisector)
+            listAllHyperplane = self.getHyperplane(listLeftInnerConvexLine, listLeftPerpendicularBisector, listRightInnerConvexLine, listRightPerpendicularBisector)
+
+            tempResult.extend(listAllHyperplane)
+            self.listStep.append([None])
+            self.listStep.append(tempResult)
+
+            for item in self.listStep[len(self.listStep)-1]:
+                typeItem = str(type(item))
+                if typeItem == self.typePoint:
+                    self.scene.addEllipse(item.x(), item.y(), 1, 1, self.penBlue, self.brush)
+                elif typeItem == self.typeLine:
+                    self.scene.addLine(item, self.penBlack)
+                elif typeItem == self.typeNone:
+                    self.scene.clear()
 
         else:
             #存divid後的點
@@ -364,6 +382,7 @@ class MainWindow(QtWidgets.QMainWindow):
         listAuxiliaryLine = []
         listHyperplane = []
         listLeftPoint = []
+        listAllHyperplane = []
         listLeftPoint = self.getConvexPoint(listLeftInnerConvexLine)
         listRightPoint = self.getConvexPoint(listRightInnerConvexLine)
         listLeftPoint = sorted(listLeftPoint, key=lambda s: s.y())
@@ -378,11 +397,13 @@ class MainWindow(QtWidgets.QMainWindow):
         latestX2 = 0
         latestY2 = 0
         isFirstHyperplane = True
+
         while 1:
             # Hyperplane輔助線
             listAuxiliaryLine.append(QtCore.QLineF(listRightPoint[indexRight], listLeftPoint[indexLeft]))
             pen = QtGui.QPen(QtCore.Qt.blue)
             # self.scene.addLine(listAuxiliaryLine[indexHyperplane], pen)
+            self.listStep.append([QtCore.QLineF(listRightPoint[indexRight], listLeftPoint[indexLeft])])
 
             # 每次都用輔助線重新畫中垂線
             temp = copy.deepcopy(listAuxiliaryLine)
@@ -422,11 +443,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 listHyperplane[indexHyperplane][1].setP2(intersectionPoint)
                 latestX2 = intersectionPoint.x()
                 latestY2 = intersectionPoint.y()
-            if touchPos == 'Null':
-                break
-
+            
             self.listStep.append([listHyperplane[indexHyperplane][1]])
             self.listAllLine.append(listHyperplane[indexHyperplane][1])
+            listAllHyperplane.append(listHyperplane[indexHyperplane][1])
+            if touchPos == 'Null':
+                break
+          
             # --------------------------------------------------------------------
             # pen = QtGui.QPen(QtCore.Qt.red)
             # self.scene.addLine(listHyperplane[indexHyperplane][1], pen)
@@ -445,6 +468,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # latestY2 = listHyperplane[indexHyperplane][1].y2()
             isFirstHyperplane = False
+        
+        return listAllHyperplane
 
     def drawConvex(self, listPoint):
         listLocalConvexLine = []
