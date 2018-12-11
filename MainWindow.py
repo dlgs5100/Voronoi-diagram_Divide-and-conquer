@@ -200,6 +200,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resultPoint.clear()
         self.resultLine.clear()
         self.listConvexLine.clear()
+        self.listStep.clear()
+        self.scene.clear()
+        self.indexStep = 0
 
         self.listStep.append([None])
         listPoint = []
