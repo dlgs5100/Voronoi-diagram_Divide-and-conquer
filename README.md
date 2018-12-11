@@ -64,6 +64,12 @@ Voronoi diagram並非新的問題，現今也存在許多種解法。
 - 使用Step by step功能時，請先使用Run執行一次。
 - 若輸入測資時畫布上仍有上筆資料，請按Clear鍵。
 - 讀檔多筆測資時，欲顯示下筆測資，請按Run鍵。
+
+## Programming:
+None
+
+## Result:
+
 ---
 ## License and copyright
 © Jerry Cheng

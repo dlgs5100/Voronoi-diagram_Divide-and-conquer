@@ -161,7 +161,6 @@ class MainWindow(QtWidgets.QMainWindow):
                         else:
                             break
                 self.labelAutoAmount.setText(str(len(self.listPointCount)))
-                print(self.loadPoint)
 
                 mode = 'file'
         else:
@@ -228,18 +227,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.resultPoint, listPoint = self.sortPoint(listPoint)  # resultPoint型態為list，listPoint型態為PointF
 
             if self.hasDuplicate(listPoint) == False:
-                self.listStep.append(listPoint)
-                self.dividePoint(listPoint)
+                if len(listPoint) <= 6:
+                    self.listStep.append(listPoint)
+                    self.dividePoint(listPoint)
 
-                # 印出step最後一步
-                for item in self.listStep[len(self.listStep)-1]:
-                    typeItem = str(type(item))
-                    if typeItem == self.typePoint:
-                        self.scene.addEllipse(item.x(), item.y(), 1, 1, self.penBlue, self.brush)
-                    elif typeItem == self.typeLine:
-                        self.scene.addLine(item, self.penBlack)
-                    elif typeItem == self.typeNone:
-                        self.scene.clear()
+                    # 印出step最後一步
+                    for item in self.listStep[len(self.listStep)-1]:
+                        typeItem = str(type(item))
+                        if typeItem == self.typePoint:
+                            self.scene.addEllipse(item.x(), item.y(), 1, 1, self.penBlue, self.brush)
+                        elif typeItem == self.typeLine:
+                            self.scene.addLine(item, self.penBlack)
+                        elif typeItem == self.typeNone:
+                            self.scene.clear()
             else:
                 self.dialog = MessageDialog.MessageDialog("Exist duplicate data!")
                 self.dialog.exec_()
@@ -337,6 +337,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             #存convex中垂線
             temp = []
+            temp.extend(listPoint)
             for item in listLocalConvexLine:
                 temp.append(item[1])
             self.listStep.append(temp)
@@ -415,10 +416,14 @@ class MainWindow(QtWidgets.QMainWindow):
                         modifyPerpendicularBisector.setP1(QtCore.QPointF(latestX2, latestY2))
                     elif modifyPerpendicularBisector.x2() == 600:
                         modifyPerpendicularBisector.setP2(QtCore.QPointF(latestX2, latestY2))
+                    elif modifyPerpendicularBisector.x1() == modifyPerpendicularBisector.x2():
+                        modifyPerpendicularBisector.setP1(QtCore.QPointF(latestX2, latestY2))
                 elif touchPos == 'Right':
                     if modifyPerpendicularBisector.x1() == 0:
                         modifyPerpendicularBisector.setP1(QtCore.QPointF(latestX2, latestY2))
                     elif modifyPerpendicularBisector.x2() == 0:
+                        modifyPerpendicularBisector.setP2(QtCore.QPointF(latestX2, latestY2))
+                    elif modifyPerpendicularBisector.x1() == modifyPerpendicularBisector.x2():
                         modifyPerpendicularBisector.setP2(QtCore.QPointF(latestX2, latestY2))
                 listModifyPerpendicularBisector.append(modifyPerpendicularBisector)
             
