@@ -70,6 +70,10 @@ None
 
 ## Result:
 
+未達成:
+- 無法執行超過6點以上之測資
+- subproblem
+
 ---
 ## License and copyright
 © Jerry Cheng
