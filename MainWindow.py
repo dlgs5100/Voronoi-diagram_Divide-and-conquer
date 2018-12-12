@@ -334,6 +334,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     position = self.determineIntersectionRelativePosition(listLocalConvexLine[i][0], intersectionPoint)
                     listLocalConvexLine[i].append(position)
                     self.deleteExceedLine(listLocalConvexLine[i], intersectionPoint)
+            
+            self.resultLine = self.sortLine()
 
             #存convex中垂線
             temp = []

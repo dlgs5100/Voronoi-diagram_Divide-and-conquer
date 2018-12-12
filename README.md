@@ -1,11 +1,5 @@
 # 高等演算法設計與分析(Design and Analysis of Algorithms) Term Project : Voronoi diagram with divide and conquer
 
-## Identification:
-系級: 資工碩一 </br>
-學號: M073040009 </br>
-姓名: 鄭詠鴻 </br>
-
----
 ## Introduction:
 Voronoi diagram(沃羅諾伊圖)又稱為Dirichlet tessellation，是由俄國數學家格奧爾吉·沃羅諾伊建立的空間分割算法，透過視覺化圖形表現出所有點的勢力範圍。 </br>
 其中的點和邊包含了幾項意義: </br>
