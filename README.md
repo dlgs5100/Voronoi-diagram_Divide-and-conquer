@@ -59,20 +59,79 @@ Voronoi diagram並非新的問題，現今也存在許多種解法。
 1. Run
 2. Step by step
 
+## Programming:
+### Data structure:
+- Python List
+- PYQT QPoint
+    ```
+    __init__ (self)
+    __init__ (self, int xpos, int ypos)
+    __init__ (self, QPoint)
+    bool isNull (self)
+    int manhattanLength (self)
+    setX (self, int xpos)
+    setY (self, int ypos)
+    int x (self)
+    int y (self)
+    ```
+- PYQT QLine
+    ```
+    __init__ (self)
+    __init__ (self, QPoint pt1_, QPoint pt2_)
+    __init__ (self, int x1pos, int y1pos, int x2pos, int y2pos)
+    __init__ (self, QLine)
+    int dx (self)
+    int dy (self)
+    bool isNull (self)
+    QPoint p1 (self)
+    QPoint p2 (self)
+    setLine (self, int aX1, int aY1, int aX2, int aY2)
+    setP1 (self, QPoint aP1)
+    setP2 (self, QPoint aP2)
+    setPoints (self, QPoint aP1, QPoint aP2)
+    translate (self, QPoint point)
+    translate (self, int adx, int ady)
+    QLine translated (self, QPoint p)
+    QLine translated (self, int adx, int ady)
+    int x1 (self)
+    int x2 (self)
+    int y1 (self)
+    int y2 (self)
+    ```
+### Layout:
+- PYQT QMainWindow
+- PYQT QDialog
+- PYQT QGraphicsView
+- PYQT QPushButton
+- PYQT QLabel
+- PYQT QLineEdit
+### Control:
+- PYQT pyqt5.uic.loadui
+- PYQT QtCore.pyqtSignal
+
 ## Manual:
 - 務必將.exe檔以及.ui檔放在相同資料夾。
 - 使用Step by step功能時，請先使用Run執行一次。
 - 若輸入測資時畫布上仍有上筆資料，請按Clear鍵。
 - 讀檔多筆測資時，欲顯示下筆測資，請按Run鍵。
 
-## Programming:
-None
+## Experimental Result:
+### Environment:
+- OS: Windows 10
+- CPU: Intel(R) Xeon(R) CPU E3-1230 V2
+- RAM: 8G
+- Compiler: Python 3
+### Discussion
+未達成
+1. 在merge Convex hull的時間複雜度在worst case會到O(n^2)，無法達到O(n)。
+2. 在Hyperplane由於事前的sort，導致average case會到O(n^2)，無法達到O(n)。
+3. Divide and conquer由於資料結構設計不夠完善，無法執行超過6點。
+4. Subproblem間有三點以上共線，在merge上會發生錯誤。
+5. 在畫Hyperplane部分，由於只判斷Convex hull之y座標，因此有些情況會發生錯誤。
+6. 在Hyperplane清除部分，僅在碰到中垂線才觸發清除，因此若沒碰到該須清除中垂線，將發生錯誤。
 
-## Result:
-
-未達成:
-- 無法執行超過6點以上之測資
-- subproblem
+## Conclusion:
+這次的Project不僅僅是理解不容易，在實作方面更是困難重重。由於以往都是習慣理解後自行實作資料結構及演算法，但經過此次作業後了解到，好的Data Structure及Algorithm的重要性。
 
 ---
 ## License and copyright
